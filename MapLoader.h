@@ -52,6 +52,8 @@ class DataLoader
         static vector<Node> nodes;
         static vector<Edge> edges;
 
+        static bool test;
+
         void load();
 
 
@@ -60,7 +62,6 @@ class DataLoader
     private:
         void readNodes();
         void readEdges();
-
 };
 
 #endif // MAPLOADER_H

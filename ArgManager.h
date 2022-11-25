@@ -40,6 +40,9 @@ struct ArgumentManager
     static void readArguments(int argc, char* argv[]);
     static void printArguments();
 
+    /// for immediate result print
+    static bool verbose;
+
     /// for output files
     static string resultDirectory;
     static void outputExperiment();

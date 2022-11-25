@@ -1,13 +1,15 @@
 #include "ArgManager.h"
 
-uint ArgumentManager::k = 5;
-uint ArgumentManager::totalCate = 100;
+uint ArgumentManager::k = 2;
+uint ArgumentManager::totalCate = 3;
 uint ArgumentManager::numQueries = 1;
-uint ArgumentManager::numCate = 5;
+uint ArgumentManager::numCate = 3;
 string ArgumentManager::algo = "prune";
 
 double ArgumentManager::EPS = 1e-10;
 double ArgumentManager::INF = 1.7e300;
+
+bool ArgumentManager::verbose = 1;
 
 string ArgumentManager::resultDirectory = "result/";
 
@@ -17,16 +19,18 @@ void ArgumentManager::readArguments(int argc, char* argv[])
     {
         string argName = string(argv[iArg]);
         istringstream argstream(argv[iArg+1]);
-        if (argName == "k")
+        if (argName == "-k")
             argstream >> k;
-        else if(argName == "tc")
+        else if(argName == "-tc")
             argstream >> totalCate;
-        else if(argName == "nq")
+        else if(argName == "-nq")
             argstream >> numQueries;
-        else if(argName == "nc")
+        else if(argName == "-nc")
             argstream >> numCate;
-        else if(argName == "algo")
+        else if(argName == "-algo")
             argstream >> algo;
+        else if(argName == "-print")
+            argstream >> verbose;
         else
         {
             cout << "unrecognized argument : " << argName << endl;

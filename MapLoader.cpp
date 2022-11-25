@@ -2,6 +2,7 @@
 
 int DataLoader::numNodes = 0;
 int DataLoader::numEdges = 0;
+bool DataLoader::test = 1;
 vector<Node> DataLoader::nodes;
 vector<Edge> DataLoader::edges;
 
@@ -53,6 +54,18 @@ void DataLoader::load()
     srand(150);
     readNodes();
     readEdges();
+
+    // test only -->
+    if(test)
+    {
+        nodes.at(1).cateID = 1;
+        nodes.at(2).cateID = 2;
+        nodes.at(3).cateID = 1;
+        nodes.at(4).cateID = 3;
+        nodes.at(5).cateID = 2;
+        nodes.at(6).cateID = 3;
+    }
+
 }
 
 /***************************************
@@ -61,7 +74,12 @@ void DataLoader::load()
 
 void DataLoader::readNodes()
 {
-    ifstream nodefile ("data/cal.cnode");
+    string filename;
+    if(test)
+        filename = "data/test.cnode";
+    else
+        filename = "data/cal.cnode";
+    ifstream nodefile(filename);
     if(nodefile.is_open())
     {
         while(nodefile.good())
@@ -88,7 +106,12 @@ void DataLoader::readNodes()
 
 void DataLoader::readEdges()
 {
-    ifstream edgefile ("data/cal.cedge");
+    string filename;
+    if(test)
+        filename = "data/test.cedge";
+    else
+        filename = "data/cal.cedge";
+    ifstream edgefile(filename);
     if(edgefile.is_open())
     {
         while(edgefile.good())

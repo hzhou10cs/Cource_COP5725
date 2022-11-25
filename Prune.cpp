@@ -5,7 +5,8 @@ void PruneKOSR::main()
     RouteTable RT;
     HashPool HP;
     current_k = 0;
-    srand(50);
+    bool verbose = ArgumentManager::verbose;
+    srand(150);
     for (int q_order = 0; q_order < ArgumentManager::numQueries; q_order ++)
     {
         // resolve the query
@@ -25,7 +26,7 @@ void PruneKOSR::main()
             auto table_iter = RT.table.rbegin();
             Route *exam_route_p = &table_iter->back(); // To directly change the value: iter->front().route_len += 50;
             Route exam_route(*exam_route_p);
-            cout << "exam size" << exam_route.route_len << endl;
+            // cout << "exam size" << exam_route.route_len << endl;
 
             // *** prepare for the next step -- adding a new step ***
             RT.table.push_back(RT.table.back());
@@ -40,7 +41,7 @@ void PruneKOSR::main()
                 // ** reconsider the dominated route **
                 for (int i=1; i<ArgumentManager::numCate+2;i++)
                 {
-                    int rec_node_ID = exam_route.candidate.at(i);
+                    int rec_node_ID = exam_route.route.at(i);
                     int rec_len = i+1;
                     vector<Route> *v_doming = &HP.Hash_list[rec_node_ID].dominating_table;
                     vector<Route> *v_dominated = &HP.Hash_list[rec_node_ID].dominated_table;
@@ -48,14 +49,16 @@ void PruneKOSR::main()
                     {
                         if (v_doming->at(len_search).route_len == rec_len)
                         {
-                            vector<int> wait_candidate = (v_doming->begin()+len_search)->candidate;
-                            vector<int> target_route = {exam_route.candidate.begin(), exam_route.candidate.begin()+i};
-                            if (target_route == wait_candidate)
+                            vector<int> wait_route = (v_doming->begin()+len_search)->route;
+                            vector<int> target_route = {exam_route.route.begin(), exam_route.route.begin()+i};
+                            if (target_route == wait_route)
                             {
                                 // extract the min cost route from dominated
-                                Route rec_route = HP.extract_min(v_dominated);
+                                // if return cost = 999 means no dominated route
+                                Route rec_route = HP.extract_min(v_dominated, rec_len);
                                 // insert the reconsider root into route table
-                                new_table_iter->push_back(rec_route);
+                                if (rec_route.cost != 999)
+                                    new_table_iter->push_back(rec_route);
                                 // erase the route in dominating
                                 v_doming->erase(v_doming->begin()+len_search);
                             }
@@ -63,13 +66,15 @@ void PruneKOSR::main()
                         // v_doming->erase(v_doming->begin()+len_search);
                     }
                 }
+                RT.result_set.push_back(exam_route);
+                RT.print_result_set(verbose);
                 current_k ++;        
             }
             else // not reached yet, do extend and replace
             {
                 // ** take out the final and last second node **
-                Node vq = DataLoader::nodes.at(exam_route.candidate.back());
-                Node vl = DataLoader::nodes.at(exam_route.candidate.rbegin()[1]);
+                Node vq = DataLoader::nodes.at(exam_route.route.back());
+                Node vl = DataLoader::nodes.at(exam_route.route.rbegin()[1]);
                 
                 // ** chekc domination **
                 bool dominating = HP.check_domination(exam_route, vq.nodeID);
@@ -77,9 +82,10 @@ void PruneKOSR::main()
                 if (dominating)
                 {
                     // add the examined route to the dominating hash table
-                    cout << "find a dominating route" << endl;
+                    cout << "find a dominating route ";
+                    RT.print_route(exam_route,verbose);
+                    cout << endl;
                     HP.add_to_dominating(exam_route, vq.nodeID);
-
                     // extend the route from the final node
                     Route extended_route = exam_route;
                     int neighborID = RT.FNN(vq.nodeID, 1);
@@ -92,7 +98,9 @@ void PruneKOSR::main()
                 else
                 {
                     // add the examined route to the dominated hash table
-                    cout << "find a dominated route" << endl;
+                    cout << "find a dominated route ";
+                    RT.print_route(exam_route,verbose);
+                    cout << endl;
                     HP.add_to_dominated(exam_route, vq.nodeID);
                 }
                 
@@ -118,7 +126,7 @@ void PruneKOSR::main()
             // } ); 
 
             // (optional) print out 
-            RT.print_last_step();
+            RT.print_last_step(verbose);
         }
     }
     
@@ -148,19 +156,27 @@ bool HashPool::check_domination(Route exam_route, int vq_ID)
 
 void HashPool::add_to_dominating(Route exam_route, int vq_ID)
 {
-    Route hash_route(vq_ID, exam_route.candidate);
+    Route hash_route(vq_ID, exam_route.route);
     Hash_list[vq_ID].dominating_table.push_back(hash_route);
 }
 
 void HashPool::add_to_dominated(Route exam_route, int vq_ID)
 {
-    Route hash_route(vq_ID, exam_route.candidate, exam_route.cost);
+    Route hash_route(vq_ID, exam_route.route, exam_route.cost);
     Hash_list[vq_ID].dominated_table.push_back(hash_route);
 }
 
-Route HashPool::extract_min(vector<Route> *route_table)
+Route HashPool::extract_min(vector<Route> *route_table, int target_len)
 {
-    Route min_route;
+    Route min_route(target_len, {}, 999, 0);
+    for(auto it = route_table->begin(); it != route_table->end(); ++it)
+    {
+        if (it->route_len == target_len && it->cost < min_route.cost)
+        {
+            min_route.route = it->route;
+            min_route.cost = it->cost;
+        }
+    }
     return min_route;
 }
 
@@ -169,12 +185,12 @@ void RouteTable::table_init(int start_id)
     table.clear();
     // insert the first route
     Route init_route;
-    init_route.candidate.push_back(start_id);
+    init_route.route.push_back(start_id);
     vector<Route> init_route_vec;
     init_route_vec.push_back(init_route);
     table.push_back(init_route_vec);
 
-    print_last_step();
+    print_last_step(ArgumentManager::verbose);
 
     // insert the second route
     Route second_route = init_route;
@@ -185,17 +201,17 @@ void RouteTable::table_init(int start_id)
     second_route_vec.push_back(second_route);
     table.push_back(second_route_vec);
 
-    print_last_step();
+    print_last_step(ArgumentManager::verbose);
 }
 
 int RouteTable::FNN(int source_id, int kth)
 {
-    return rand()%100;
+    return rand()%DataLoader::numNodes;
 }
 
 Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID)
 {
-    extended_route.candidate.push_back(neigborID);
+    extended_route.route.push_back(neigborID);
     extended_route.route_len ++;
     extended_route.knn = 1;
     extended_route.cost += rand()%5;
@@ -204,24 +220,49 @@ Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID)
 
 Route RouteTable::replace_route(Route replaced_route, int vlID, int neigborID)
 {
-    replaced_route.candidate.back()=neigborID;
+    replaced_route.route.back()=neigborID;
     replaced_route.knn ++;
     replaced_route.cost += rand()%10;
     return replaced_route;
 }
 
-void RouteTable::print_last_step()
+
+void RouteTable::print_route(Route route_to_print, bool verbose)
 {
-    // print out the current step
-    cout << "current step:" << table.size() << endl;
-    vector<Route> current_step_v = table.back();
-    for (int n_route = 0; n_route<current_step_v.size(); n_route++)
+    if (verbose)
     {
-        cout << "[ " << current_step_v.at(n_route).route_len << ": <";
-        vector<int> current_vector = current_step_v.at(n_route).candidate;
+        cout << "  [" << route_to_print.route_len << ": <";
+        vector<int> current_vector = route_to_print.route;
         for (int i = 0; i<current_vector.size(); i++)
             cout << current_vector.at(i) << ",";
-        cout << "> (" << current_step_v.at(n_route).cost << ")]  |  " ;
+        cout << "> (" << route_to_print.cost << ")]  | ";
     }
-    cout << endl;
+}
+
+void RouteTable::print_last_step(bool verbose)
+{
+    // print out the current step
+    if (verbose)
+    {
+        cout << "current step:" << table.size() << endl;
+        vector<Route> current_step_v = table.back();
+        for (int n_route = 0; n_route<current_step_v.size(); n_route++)
+        {
+            print_route(current_step_v.at(n_route), 1);
+        }
+        cout << endl << "-----------------------------------------------------" << endl;
+    }
+}
+
+void RouteTable::print_result_set(bool verbose)
+{
+    if (verbose)
+    {
+        cout << "Obatain a new result, reconsider the dominated route" << endl;
+        cout << "Result set: ";
+        for(auto it=result_set.begin(); it!=result_set.end(); it++)
+            print_route(*it, 1);
+        cout << endl;
+    }
+
 }
