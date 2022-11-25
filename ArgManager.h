@@ -6,9 +6,11 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <list>
 

@@ -2,7 +2,7 @@
 
 uint ArgumentManager::k = 5;
 uint ArgumentManager::totalCate = 100;
-uint ArgumentManager::numQueries = 50;
+uint ArgumentManager::numQueries = 1;
 uint ArgumentManager::numCate = 5;
 string ArgumentManager::algo = "prune";
 

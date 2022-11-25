@@ -10,16 +10,24 @@
 struct Route
 {
     Route():
-        route_len(1), route_cost(0), knn(1)
+        route_len(1), cost(0.0), knn(1)
         { }
 
-    Route(int len, vector<int> node_seq, int cost, int k):
-        route_len(len), node_sequence(node_seq), route_cost(cost), knn(k)
+    Route(int key, vector<int> value):
+        route_len(key), candidate(value)  
+        { }
+
+    Route(int key, vector<int> value, int sec_value):
+        route_len(key), candidate(value),cost(sec_value) 
+        { }
+
+    Route(int len, vector<int> node_seq, float cost, int k):
+        route_len(len), candidate(node_seq), cost(cost), knn(k)
         { }
 
     int route_len;
-    vector<int> node_sequence;
-    int route_cost;
+    vector<int> candidate;
+    float cost;
     int knn;
 };
 
@@ -34,14 +42,53 @@ class RouteTable
         list<vector<Route>> table; 
 
         void table_init(int start_ID);
+        int FNN(int source_ID, int kth);
+        Route extend_route(Route exam_route, int vq_ID, int neighbor_ID);
+        Route replace_route(Route exam_route, int vl_ID, int neighbor_ID);
 
-        int FNN(int source_ID);
-
+        void print_last_step();
     protected:
 
     private:
         
         
+};
+
+/***************************************
+ * Vertex Hash Pair struct
+ **************************************/
+
+struct Hash_table
+{
+    Hash_table() {};
+
+    vector<Route> dominating_table;
+    vector<Route> dominated_table;
+};
+
+/***************************************
+ * Vertex Hash Table class
+ **************************************/
+
+class HashPool
+{
+    public:
+        HashPool() {};
+
+        unordered_map<int, Hash_table> Hash_list;
+
+        void insert_pair();
+        void delete_pair();
+
+        bool check_domination(Route exam_route, int vq_ID);
+        void add_to_dominating(Route exam_route, int vq_ID);
+        void add_to_dominated(Route exam_route, int vq_ID);
+        Route extract_min(vector<Route> *route_table);
+        
+
+    protected:
+
+    private:
 };
 
 /***************************************
@@ -58,6 +105,7 @@ class PruneKOSR
 
     private:
         int current_k;
+        
 };
 
 #endif // PRUNE_H
