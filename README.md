@@ -6,6 +6,6 @@ make
 
 Then run:
 
-./TEST
+./TEST_DATALOADER
 
 This can be executed in the Ubuntu 22.04 LTS system with g++ version 12.0
