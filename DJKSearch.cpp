@@ -14,11 +14,12 @@ FCNodeID DJKSearch::dijkstra(int s, int TID, int kth, int t)
         FCNode init_node;
         open_node[i] = init_node;
     }
+
     // Initial the source node
     int exam_nodeID = s;
     FCNode exam_node(s, 0);
     open_node[s] = exam_node;
-    
+
     // while loop for main algorithm
     while (open_node.size()!=0)
     {   
@@ -30,6 +31,7 @@ FCNodeID DJKSearch::dijkstra(int s, int TID, int kth, int t)
                 return p1.second.cost < p2.second.cost;
             }
         );
+
         // assign the iterator address to the exame node
         exam_nodeID = pr->first;
         exam_node = pr->second;
@@ -38,7 +40,7 @@ FCNodeID DJKSearch::dijkstra(int s, int TID, int kth, int t)
         // move it from open to close node
         open_node.erase(exam_nodeID);
         close_node.insert({exam_nodeID, exam_node});
-
+  
         // cout << endl <<  "--------- open node table (" << open_node.size() << ") ----------" << endl;
         // for (auto open_it = open_node.begin(); open_it!= open_node.end(); open_it++)
         // {
@@ -52,25 +54,25 @@ FCNodeID DJKSearch::dijkstra(int s, int TID, int kth, int t)
         // }
 
         // count the accessed nodes with target category
-
-
         if (DataLoader::nodes.at(exam_nodeID).cateID == TID)
         {
             target_cate_num ++;
             target_node[exam_nodeID] = exam_node;
+
+            // cout << endl << "already found: " << target_cate_num << " points with target categories" << endl;
+            // cout <<  "--------- target node table (" << target_node.size() << ") ----------" << endl;
+            // for (auto target_it = target_node.begin(); target_it!= target_node.end(); target_it++)
+            // {
+            //     cout << "[ " << target_it->first << ", f: " << target_it->second.father << ", c; " << target_it->second.cost << "] "; 
+            // }
+
             if (exam_nodeID == t || target_cate_num == kth)
+                // cout << "break here " << exam_nodeID << ","<< t << ","<< kth <<endl;
                 break;
         }
 
-        // cout << endl << "already found: " << target_cate_num << " points with target categories" << endl;
-        // cout <<  "--------- target node table (" << target_node.size() << ") ----------" << endl;
-        // for (auto target_it = target_node.begin(); target_it!= target_node.end(); target_it++)
-        // {
-        //     cout << "[ " << target_it->first << ", f: " << target_it->second.father << ", c; " << target_it->second.cost << "] "; 
-        // }
-
         // extract the adjacent nodes from map (type: vector<node_dis> adj_node)
-        near_nodes_set = DataLoader::adj_matrix.at(exam_nodeID);
+        near_nodes_set = DataLoader::adj_matrix[exam_nodeID];
         int num_near_nodes = near_nodes_set.size();
 
         // cout << "node " << exam_nodeID << " has " << num_near_nodes << " neighbors" << endl;
@@ -79,9 +81,12 @@ FCNodeID DJKSearch::dijkstra(int s, int TID, int kth, int t)
         //     cout << "[ ID: " << neighbor_it->first << ", DIS: " << neighbor_it->second << " ] "; 
         // }
         // cout << endl << endl;
-
         if (num_near_nodes == 0)
+        {
+            // cout << "for node "<< exam_nodeID << ", it has no near nodes" << endl;
             continue; // no adjacent nodes, examine the next smalled cost node
+        }
+            
         for (int n = 0; n<num_near_nodes; n++)
         {
             node_dis near_node = near_nodes_set.at(n);

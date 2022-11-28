@@ -2,7 +2,6 @@
 
 int DataLoader::numNodes = 0;
 int DataLoader::numEdges = 0;
-bool DataLoader::test = 1;
 vector<Node> DataLoader::nodes;
 vector<Edge> DataLoader::edges;
 map<int, adj_node> DataLoader::adj_matrix;
@@ -57,7 +56,7 @@ void DataLoader::load()
     readEdges();
 
     // test only -->
-    if(test)
+    if(ArgumentManager::test)
     {
         nodes.at(0).cateID = 0;
         nodes.at(1).cateID = 1;
@@ -78,7 +77,7 @@ void DataLoader::load()
 void DataLoader::readNodes()
 {
     string filename;
-    if(test)
+    if(ArgumentManager::test)
         filename = "data/test.cnode";
     else
         filename = "data/cal.cnode";
@@ -110,7 +109,7 @@ void DataLoader::readNodes()
 void DataLoader::readEdges()
 {
     string filename;
-    if(test)
+    if(ArgumentManager::test)
         filename = "data/test.cedge";
     else
         filename = "data/cal.cedge";
@@ -150,4 +149,10 @@ void DataLoader::constructing()
         nd_pair.second = edges.at(i).length;
         adj_matrix[startID].push_back(nd_pair);
     }
+    // cout << "during constructing the map size is: " << adj_matrix.size();
+    // for (const auto& p : adj_matrix ) {
+    //     if (p.first > 11590 && p.first < 11600)
+    //         cout << p.first << endl; // "Karl", "George"
+    //     // p.second is Employee object.
+    // }
 }

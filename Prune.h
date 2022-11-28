@@ -45,7 +45,6 @@ class RouteTable
 
         int table_init(int start_ID, int first_cate);
         int FNN(int source_ID, int kth);
-        void RelaM_init();
         Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
         Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
 

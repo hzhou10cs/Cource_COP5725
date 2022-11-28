@@ -12,7 +12,7 @@ void QueryGenerator::generating()
     cout << "-------------Generating queries------------" << endl;
     
 
-    if(DataLoader::test)
+    if(ArgumentManager::test)
     {
         cout << "Testing the query (s, t, <MA, RE, CI>, 2)" << endl;
         query_set.clear();
@@ -22,10 +22,22 @@ void QueryGenerator::generating()
     else
     {
         cout << "Generated " << numQueries << " random queries ... ..." << endl;
+        srand(50);
+        vector<int> goodnodeID;
+        for (int e=0; e<DataLoader::numEdges; e++)
+        {
+            goodnodeID.push_back(DataLoader::edges.at(e).startNodeID);
+
+        }
+        vector<int>::iterator ip;
+        ip = std::unique(goodnodeID.begin(), goodnodeID.end());
+        goodnodeID.resize(distance(goodnodeID.begin(), ip));
+        cout << "good node ID size" << goodnodeID.size() << endl;
         for (int i=0; i<numQueries; i++)
         {
-            int source_ID = rand()%numNodes;
-            int destination_ID = rand()%numNodes;
+            int source_ID_index = rand()%goodnodeID.size();
+            int source_ID = goodnodeID.at(source_ID_index);
+            int destination_ID = rand()%DataLoader::numNodes;
 
             vector<int> category_set;
             for (int i=0; i<numCate; i++)

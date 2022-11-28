@@ -32,6 +32,8 @@ struct ArgumentManager
     static uint numCate; // ........ number of categories each query
     static string algo; // ......... which version of algorithm to be used
 
+    static bool test;
+
     /// mathematic parameter
     static double EPS;
     static double INF;

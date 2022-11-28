@@ -1,13 +1,14 @@
 #include "Prune.h"
 #include "DJKSearch.h"
 
-int PruneKOSR::kth_track [0][0];
+// int PruneKOSR::kth_track [0][0];
 
 void PruneKOSR::main()
 {
     RouteTable RT;
     HashPool HP;
-    kth_track[ArgumentManager::numCate][DataLoader::numNodes];
+    // kth_track[ArgumentManager::numCate][DataLoader::numNodes];
+    map<pair<int,int>,int> kth_track_map;
     current_k = 0;
     bool verbose = ArgumentManager::verbose;
     srand(150);
@@ -18,18 +19,22 @@ void PruneKOSR::main()
         Node s_node = DataLoader::nodes.at(query.sourceID);
         Node t_node = DataLoader::nodes.at(query.destinationID);
         vector<int> cate_seq = query.cate_sequence;
+        RT.table.clear();
+        HP.Hash_list.clear();
+        kth_track_map.clear();
 
         // initialize the route table
         int second_node_ID = RT.table_init(s_node.nodeID, cate_seq.at(0));
-        kth_track[2][s_node.nodeID] = 1;
+        kth_track_map[{s_node.nodeID, 2}] = 1;  
 
         // initialize the category track
         int current_cat = cate_seq.at(0);
         int next_cat = cate_seq.at(1);
 
         // In to the main function
-        while (current_k<ArgumentManager::k)
+        while (current_k< ArgumentManager::k)
         {
+            cout << "current k" << current_k << endl;
             // *** take out the route ***
             auto table_iter = RT.table.rbegin();
             Route *exam_route_p = &table_iter->back(); // To directly change the value: iter->front().route_len += 50;
@@ -47,6 +52,7 @@ void PruneKOSR::main()
             // check if the route reached the target node
             if(exam_route.route_len == ArgumentManager::numCate+2)
             {
+                cout << q_order << endl;
                 // ** add the target route in the result list
                 RT.result_set.push_back(exam_route);
                 // ** reconsider the dominated route **
@@ -57,6 +63,7 @@ void PruneKOSR::main()
                     vector<Route> *v_doming = &HP.Hash_list[rec_node_ID].dominating_table;
                     vector<Route> *v_dominated = &HP.Hash_list[rec_node_ID].dominated_table;
 
+                    // show the dominating and dominated table
                     // if (v_doming->size()!=0)
                     // {   
                     //     cout << "dominating table of node: " << rec_node_ID << " -- ";
@@ -120,8 +127,9 @@ void PruneKOSR::main()
                 if (dominating)
                 {   
                     // add the examined route to the dominating hash table
-                    kth_track[exam_route.route_len][vq.nodeID] = 1;
-                    cout << "find a dominating route: ";
+                    kth_track_map[{vq.nodeID, exam_route.route_len+1}] = 1;
+                    // kth_track[exam_route.route_len][vq.nodeID] = 1;
+                    // cout << "find a dominating route: ";
                     RT.print_route(exam_route,verbose);
                     HP.add_to_dominating(exam_route, vq.nodeID);
 
@@ -135,6 +143,11 @@ void PruneKOSR::main()
                         NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
                     int NNID = NN.first;
                     double NNcost = NN.second.cost;
+                    if (NN.second.cost == ArgumentManager::INF)
+                    {
+                        cout << "break here query #: "<< q_order << endl;
+                        break;
+                    }
                     extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
                 
                     // cout << "node to be extend is: " << NNID << endl;
@@ -145,7 +158,7 @@ void PruneKOSR::main()
                 else
                 {
                     // add the examined route to the dominated hash table
-                    cout << "find a dominated route: ";
+                    // cout << "find a dominated route: ";
                     RT.print_route(exam_route,verbose);
                     // cout << endl;
                     HP.add_to_dominated(exam_route, vq.nodeID);
@@ -155,22 +168,33 @@ void PruneKOSR::main()
                 if (exam_route.rec == 0)
                 {
                     Route replaced_route = exam_route;
-                    kth_track[exam_route.route_len][vl.nodeID] = kth_track[exam_route.route_len][vl.nodeID]+1;
-                    // cout << "b_node: " << 3 << "routelen: " << 3<< "kth: " << kth_track[3][3] << endl;
-                    int kth = kth_track[exam_route.route_len][vl.nodeID];
+                    kth_track_map[{vl.nodeID, exam_route.route_len}] += 1;
+                    int kth = kth_track_map[{vl.nodeID, exam_route.route_len}];
+                    // int kth = kth_track[exam_route.route_len][vl.nodeID];
+                    // cout << "in replace operation, kth is: " << kth << endl;
                     FCNodeID kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
                     // int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
                     int kthNNID = kthNN.first;
                     double kthNNcost = kthNN.second.cost;
+
+                    if (kthNNcost == ArgumentManager::INF)
+                    {
+                        cout << "break here query #: "<< q_order << endl;
+                        break;
+                    }
                     
                     // ** add the replaced route to the route table if a new replaced node is found **
                     if (kthNNID!=vq.nodeID)
                     {
+                        // cout << "node to be replaced: " << kthNNID<< endl;
                         replaced_route = RT.replace_route(replaced_route, vl.nodeID, kthNNID, kthNNcost);                 
                         new_table_iter->push_back(replaced_route);
                     }
                     else
-                        cout << "no need to be extend" << endl;
+                    {
+                        // cout << "no need to be replace" << endl;
+                    }
+                        
                 }
 
             }
@@ -182,8 +206,10 @@ void PruneKOSR::main()
             });
 
             // (optional) print out 
-            RT.print_last_step(1);
+            RT.print_last_step(verbose);
         }
+        if (current_k == ArgumentManager::k)
+            cout << "find top k route" << endl;
     }
 }
 
@@ -255,7 +281,6 @@ int RouteTable::table_init(int start_id, int first_cate)
 
     // insert the second route
     Route second_route = init_route;
-    
     FCNodeID NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
     // FCNodeID second_id = FNN (start_id, 2, kth);
     int NNID = NN.first;
