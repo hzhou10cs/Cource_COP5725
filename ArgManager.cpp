@@ -1,5 +1,11 @@
 #include "ArgManager.h"
 
+// uint ArgumentManager::k = 10;
+// uint ArgumentManager::totalCate = 50;
+// uint ArgumentManager::numQueries = 3;
+// uint ArgumentManager::numCate = 6;
+
+// * for test
 uint ArgumentManager::k = 2;
 uint ArgumentManager::totalCate = 3;
 uint ArgumentManager::numQueries = 1;

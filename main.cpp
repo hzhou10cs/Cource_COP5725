@@ -21,4 +21,7 @@ int main(int argc, char* argv[])
     // prunning KOSR algo
     PruneKOSR PK;
     PK.main();
+
+    cout << "finish, exit" << endl;
+    exit(0);
 }

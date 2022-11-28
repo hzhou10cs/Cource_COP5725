@@ -56,8 +56,6 @@ class DataLoader
         static vector<Edge> edges;
         static map<int, adj_node> adj_matrix;
 
-        
-
         static bool test;
 
         void load();

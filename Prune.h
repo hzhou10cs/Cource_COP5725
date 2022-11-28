@@ -10,26 +10,26 @@
 struct Route
 {
     Route():
-        route_len(1), cost(0.0), p_cost(0.0), knn(1)
+        route_len(1), cost(0.0), p_cost(0.0), rec(0)
         { }
 
-    Route(int key, vector<int> value):
-        route_len(key), route(value)  
+    Route(int len, vector<int> node_seq):
+        route_len(len), route(node_seq)
         { }
 
-    Route(int key, vector<int> value, int sec_value):
-        route_len(key), route(value),cost(sec_value) 
+    Route(int len, vector<int> node_seq, double cost):
+        route_len(len), route(node_seq), cost(cost) 
         { }
 
-    Route(int len, vector<int> node_seq, double cost, int k):
-        route_len(len), route(node_seq), cost(cost), knn(k)
+    Route(int len, vector<int> node_seq, double cost, bool rec):
+        route_len(len), route(node_seq), cost(cost), rec(rec)
         { }
 
     int route_len;
     vector<int> route;
     double cost;
     double p_cost;
-    int knn;
+    bool rec;
 };
 
 /***************************************
@@ -45,12 +45,14 @@ class RouteTable
 
         int table_init(int start_ID, int first_cate);
         int FNN(int source_ID, int kth);
+        void RelaM_init();
         Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
         Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
 
         void print_last_step(bool print);
         void print_route(Route route_to_print, bool print);
         void print_result_set(bool print);
+        void print_hash_table(vector<Route> route_table);
     protected:
 
     private:
