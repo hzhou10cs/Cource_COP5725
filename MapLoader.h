@@ -42,6 +42,9 @@ struct Edge
  * Class: DataLoader
  **************************************/
 
+typedef pair<int, double> node_dis;
+typedef vector<node_dis> adj_node;
+
 class DataLoader
 {
     public:
@@ -51,11 +54,14 @@ class DataLoader
         static int numEdges;
         static vector<Node> nodes;
         static vector<Edge> edges;
+        static map<int, adj_node> adj_matrix;
+
+        
 
         static bool test;
 
         void load();
-
+        void constructing();
 
     protected:
 
@@ -63,5 +69,6 @@ class DataLoader
         void readNodes();
         void readEdges();
 };
+
 
 #endif // MAPLOADER_H

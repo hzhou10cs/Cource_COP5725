@@ -5,6 +5,7 @@ int DataLoader::numEdges = 0;
 bool DataLoader::test = 1;
 vector<Node> DataLoader::nodes;
 vector<Edge> DataLoader::edges;
+map<int, adj_node> DataLoader::adj_matrix;
 
 /***************************************
  * Reading Node stream
@@ -58,12 +59,14 @@ void DataLoader::load()
     // test only -->
     if(test)
     {
+        nodes.at(0).cateID = 0;
         nodes.at(1).cateID = 1;
         nodes.at(2).cateID = 2;
         nodes.at(3).cateID = 1;
         nodes.at(4).cateID = 3;
         nodes.at(5).cateID = 2;
         nodes.at(6).cateID = 3;
+        nodes.at(7).cateID = 4;
     }
 
 }
@@ -96,12 +99,12 @@ void DataLoader::readNodes()
     {
         cout << "cal.cnode is not open" << endl;
     }
-    numNodes--;
+    // numNodes--;
     cout << numNodes << " vertex has been loaded ... ..." << endl;
 }
 
 /***************************************
- * Dataloader Read Map
+ * Dataloader Read Edge
  ***************************************/
 
 void DataLoader::readEdges()
@@ -130,4 +133,21 @@ void DataLoader::readEdges()
     }
     numEdges--;
     cout << numEdges << " Edges has been loaded ... ..." << endl;
+}
+
+/***************************************
+ * Dataloader Read Edge
+ ***************************************/
+
+void DataLoader::constructing()
+{
+    int startID;
+    node_dis nd_pair;
+    for (int i=0; i<numEdges; i++)
+    {
+        startID = edges.at(i).startNodeID;
+        nd_pair.first = edges.at(i).endNodeID;
+        nd_pair.second = edges.at(i).length;
+        adj_matrix[startID].push_back(nd_pair);
+    }
 }

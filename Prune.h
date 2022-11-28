@@ -10,7 +10,7 @@
 struct Route
 {
     Route():
-        route_len(1), cost(0.0), knn(1)
+        route_len(1), cost(0.0), p_cost(0.0), knn(1)
         { }
 
     Route(int key, vector<int> value):
@@ -21,13 +21,14 @@ struct Route
         route_len(key), route(value),cost(sec_value) 
         { }
 
-    Route(int len, vector<int> node_seq, float cost, int k):
+    Route(int len, vector<int> node_seq, double cost, int k):
         route_len(len), route(node_seq), cost(cost), knn(k)
         { }
 
     int route_len;
     vector<int> route;
-    float cost;
+    double cost;
+    double p_cost;
     int knn;
 };
 
@@ -42,10 +43,10 @@ class RouteTable
         list<vector<Route>> table;
         vector<Route> result_set; 
 
-        void table_init(int start_ID);
+        int table_init(int start_ID, int first_cate);
         int FNN(int source_ID, int kth);
-        Route extend_route(Route exam_route, int vq_ID, int neighbor_ID);
-        Route replace_route(Route exam_route, int vl_ID, int neighbor_ID);
+        Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
+        Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
 
         void print_last_step(bool print);
         void print_route(Route route_to_print, bool print);
@@ -103,6 +104,8 @@ class PruneKOSR
     public:
         PruneKOSR() {};
         void main();
+
+        static int kth_track[0][0];
     
     protected:
 

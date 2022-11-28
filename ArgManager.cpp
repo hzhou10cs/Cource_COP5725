@@ -7,7 +7,7 @@ uint ArgumentManager::numCate = 3;
 string ArgumentManager::algo = "prune";
 
 double ArgumentManager::EPS = 1e-10;
-double ArgumentManager::INF = 1.7e300;
+double ArgumentManager::INF = 1.7e30;
 
 bool ArgumentManager::verbose = 1;
 

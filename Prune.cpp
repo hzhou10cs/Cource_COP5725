@@ -1,9 +1,13 @@
 #include "Prune.h"
+#include "DJKSearch.h"
+
+int PruneKOSR::kth_track [0][0];
 
 void PruneKOSR::main()
 {
     RouteTable RT;
     HashPool HP;
+    kth_track[ArgumentManager::numCate][DataLoader::numNodes];
     current_k = 0;
     bool verbose = ArgumentManager::verbose;
     srand(150);
@@ -16,11 +20,15 @@ void PruneKOSR::main()
         vector<int> cate_seq = query.cate_sequence;
 
         // initialize the route table
-        RT.table_init(s_node.nodeID);
-        // cout << "the size of the table is" << RT.table.size() << endl; 
+        int second_node_ID = RT.table_init(s_node.nodeID, cate_seq.at(0));
+        kth_track[2][s_node.nodeID] = 1;
+
+        // initialize the category track
+        int current_cat = cate_seq.at(0);
+        int next_cat = cate_seq.at(1);
 
         // In to the main function
-        while (current_k<ArgumentManager::k)
+        while (current_k<ArgumentManager::k && RT.table.size()<10)
         {
             // *** take out the route ***
             auto table_iter = RT.table.rbegin();
@@ -54,10 +62,10 @@ void PruneKOSR::main()
                             if (target_route == wait_route)
                             {
                                 // extract the min cost route from dominated
-                                // if return cost = 999 means no dominated route
+                                // if return cost =  INF means no dominated route
                                 Route rec_route = HP.extract_min(v_dominated, rec_len);
                                 // insert the reconsider root into route table
-                                if (rec_route.cost != 999)
+                                if (rec_route.cost != ArgumentManager::INF)
                                     new_table_iter->push_back(rec_route);
                                 // erase the route in dominating
                                 v_doming->erase(v_doming->begin()+len_search);
@@ -68,29 +76,46 @@ void PruneKOSR::main()
                 }
                 RT.result_set.push_back(exam_route);
                 RT.print_result_set(verbose);
-                current_k ++;        
+                current_k ++;
             }
-            else // not reached yet, do extend and replace
+            // havent visited all category, do extend and replace
+            else
             {
+                
                 // ** take out the final and last second node **
                 Node vq = DataLoader::nodes.at(exam_route.route.back());
                 Node vl = DataLoader::nodes.at(exam_route.route.rbegin()[1]);
-                
+
+                // ** update the category track
+                current_cat = vq.cateID;
+                if (exam_route.route_len == ArgumentManager::numCate+1)
+                    next_cat = t_node.cateID;
+                else
+                    next_cat = cate_seq.at(exam_route.route_len-1);
                 // ** chekc domination **
                 bool dominating = HP.check_domination(exam_route, vq.nodeID);
                 // if dominating
                 if (dominating)
                 {
                     // add the examined route to the dominating hash table
-                    cout << "find a dominating route ";
+                    cout << "find a dominating route "<< endl;
+                    kth_track[exam_route.route_len][vq.nodeID] = 1;
                     RT.print_route(exam_route,verbose);
                     cout << endl;
                     HP.add_to_dominating(exam_route, vq.nodeID);
                     // extend the route from the final node
                     Route extended_route = exam_route;
-                    int neighborID = RT.FNN(vq.nodeID, 1);
-                    extended_route = RT.extend_route(extended_route, vq.nodeID, neighborID);
-
+                    // int neighborID = RT.FNN(vq.nodeID, extended_route.knn);
+                    FCNodeID NN;
+                    if (exam_route.route_len == ArgumentManager::numCate+1)
+                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID);
+                    else 
+                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
+                    int NNID = NN.first;
+                    double NNcost = NN.second.cost;
+                    extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
+                
+                    cout << "node to be extend is: " << NNID << endl;
                     // ** add the extended route to the route table **
                     new_table_iter->push_back(extended_route);
                 }
@@ -98,7 +123,7 @@ void PruneKOSR::main()
                 else
                 {
                     // add the examined route to the dominated hash table
-                    cout << "find a dominated route ";
+                    cout << "find a dominated route "<< endl;
                     RT.print_route(exam_route,verbose);
                     cout << endl;
                     HP.add_to_dominated(exam_route, vq.nodeID);
@@ -106,11 +131,24 @@ void PruneKOSR::main()
                 
                 // do replace with the second node
                 Route replaced_route = exam_route;
-                int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
-                replaced_route = RT.replace_route(replaced_route, vl.nodeID, neighborID);
+                kth_track[exam_route.route_len][vl.nodeID] = kth_track[exam_route.route_len][vl.nodeID]+1;
+                // cout << "b_node: " << 3 << "routelen: " << 3<< "kth: " << kth_track[3][3] << endl;
+                int kth = kth_track[exam_route.route_len][vl.nodeID];
+                FCNodeID kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
+                // int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
+                int kthNNID = kthNN.first;
+                double kthNNcost = kthNN.second.cost;
 
-                // ** add the replaced route to the route table **
-                new_table_iter->push_back(replaced_route);
+                cout << "node to be replaced is: " << kthNNID <<" current vq" << vq.nodeID << ", kth is: " << kth << endl;
+                
+                // ** add the replaced route to the route table if a new replaced node is found **
+                if (kthNNID!=vq.nodeID)
+                {
+                    replaced_route = RT.replace_route(replaced_route, vl.nodeID, kthNNID, kthNNcost);                 
+                    new_table_iter->push_back(replaced_route);
+                }
+                else
+                    cout << "no need to be extend" << endl;
             }
         
             // *** sort the route by cost from large to small ***
@@ -118,7 +156,6 @@ void PruneKOSR::main()
             {
             return lhs.cost > rhs.cost;
             });
-
 
             // max_element( new_table_iter->begin(), new_table_iter->end(), []( const Route &lhs, const Route &rhs )
             // {
@@ -135,20 +172,28 @@ void PruneKOSR::main()
 bool HashPool::check_domination(Route exam_route, int vq_ID)
 {
     // Case 1: the hash table of vertex VQ has never been generated
+    // cout << "stop here" << endl;
     if (Hash_list.count(vq_ID)==0 ) 
     {
         // Generate the hash table
         Hash_table hash;
         Hash_list[vq_ID] = hash;
+        // cout << "stop in case 1" << endl;
         return true;
     }
+    
     // Case 2: vertex hash exist and already contain this route_len
-    vector<Route> *domi_table = &Hash_list[vq_ID].dominating_table;
-    for (auto iter = domi_table->rbegin() ; iter != domi_table->rend(); --iter)
+    vector<Route> domi_table = Hash_list[vq_ID].dominating_table;
+    // cout << "stop before case 2 loop" << endl;
+    for (auto iter = domi_table.rbegin() ; iter != domi_table.rend(); --iter)
     {
         if (iter->route_len == exam_route.route_len)
-        return false;
+        {
+            // cout << "stop after first loop in case 2" << endl;
+            return false;
+        }
     }
+    cout << "stop here" << endl;
     // Case 3: hash of VQ exists checked
     //         no such route_len chekced
     return true;      
@@ -180,8 +225,11 @@ Route HashPool::extract_min(vector<Route> *route_table, int target_len)
     return min_route;
 }
 
-void RouteTable::table_init(int start_id)
+int RouteTable::table_init(int start_id, int first_cate)
 {
+    cout << "start ID is " << start_id << endl;
+    cout << "first category is " <<  first_cate << endl;
+
     table.clear();
     // insert the first route
     Route init_route;
@@ -194,14 +242,21 @@ void RouteTable::table_init(int start_id)
 
     // insert the second route
     Route second_route = init_route;
-    int kth = 1;
-    int second_id = FNN (start_id, kth);
-    second_route = this->extend_route(second_route, start_id, second_id);
+    
+    FCNodeID NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
+    // FCNodeID second_id = FNN (start_id, 2, kth);
+    int NNID = NN.first;
+    double NNcost = NN.second.cost;
+    cout << "return ID: " <<  NNID <<endl <<"return cost: " << NNcost << endl;
+
+    second_route = this->extend_route(second_route, start_id, NNID, NNcost);
     vector<Route> second_route_vec;
     second_route_vec.push_back(second_route);
     table.push_back(second_route_vec);
 
     print_last_step(ArgumentManager::verbose);
+
+    return NNID;
 }
 
 int RouteTable::FNN(int source_id, int kth)
@@ -209,20 +264,21 @@ int RouteTable::FNN(int source_id, int kth)
     return rand()%DataLoader::numNodes;
 }
 
-Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID)
+Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID, double cost)
 {
     extended_route.route.push_back(neigborID);
     extended_route.route_len ++;
     extended_route.knn = 1;
-    extended_route.cost += rand()%5;
+    extended_route.p_cost = extended_route.cost;
+    extended_route.cost += cost;
     return extended_route;
 }
 
-Route RouteTable::replace_route(Route replaced_route, int vlID, int neigborID)
+Route RouteTable::replace_route(Route replaced_route, int vlID, int neigborID, double cost)
 {
     replaced_route.route.back()=neigborID;
     replaced_route.knn ++;
-    replaced_route.cost += rand()%10;
+    replaced_route.cost = replaced_route.p_cost + cost;
     return replaced_route;
 }
 
@@ -244,13 +300,15 @@ void RouteTable::print_last_step(bool verbose)
     // print out the current step
     if (verbose)
     {
+        cout << "----------------------------------------" << endl;
         cout << "current step:" << table.size() << endl;
         vector<Route> current_step_v = table.back();
         for (int n_route = 0; n_route<current_step_v.size(); n_route++)
         {
             print_route(current_step_v.at(n_route), 1);
         }
-        cout << endl << "-----------------------------------------------------" << endl;
+        cout << endl << "*********----------------***************" << endl;
+        
     }
 }
 

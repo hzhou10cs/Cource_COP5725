@@ -11,6 +11,8 @@ int main(int argc, char* argv[])
     // load data
     DataLoader loader;
     loader.load();
+    // construct adjacent map
+    loader.constructing();
 
     // generate query
     QueryGenerator generator;
