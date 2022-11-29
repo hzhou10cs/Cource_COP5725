@@ -23,6 +23,7 @@ void PruneKOSR::main()
         HP.Hash_list.clear();
         kth_track_map.clear();
 
+        //printf("initialize the route table\n");
         // initialize the route table
         int second_node_ID = RT.table_init(s_node.nodeID, cate_seq.at(0));
         kth_track_map[{s_node.nodeID, 2}] = 1;  
@@ -31,6 +32,7 @@ void PruneKOSR::main()
         int current_cat = cate_seq.at(0);
         int next_cat = cate_seq.at(1);
 
+        //printf("In to the main function\n");
         // In to the main function
         while (current_k< ArgumentManager::k)
         {
@@ -39,7 +41,7 @@ void PruneKOSR::main()
             auto table_iter = RT.table.rbegin();
             Route *exam_route_p = &table_iter->back(); // To directly change the value: iter->front().route_len += 50;
             Route exam_route(*exam_route_p);
-            // cout << "exam size" << exam_route.route_len << endl;
+            //cout << "exam size" << exam_route.route_len << endl;
             
             // *** prepare for the next step -- adding a new step ***
             RT.table.push_back(RT.table.back());
@@ -137,10 +139,14 @@ void PruneKOSR::main()
                     Route extended_route = exam_route;
                     // int neighborID = RT.FNN(vq.nodeID, extended_route.knn);
                     FCNodeID NN;
-                    if (exam_route.route_len == ArgumentManager::numCate+1)
+                    if (exam_route.route_len == ArgumentManager::numCate+1){
+                        //NN = RT.FNN(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID);
                         NN = DJKSearch::dijkstra(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID);
-                    else 
-                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
+                    }                      
+                    else{
+                        NN = RT.FNN(vq.nodeID, next_cat, 1, vq.nodeID);
+                        //NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
+                    } 
                     int NNID = NN.first;
                     double NNcost = NN.second.cost;
                     if (NN.second.cost == ArgumentManager::INF)
@@ -172,10 +178,13 @@ void PruneKOSR::main()
                     int kth = kth_track_map[{vl.nodeID, exam_route.route_len}];
                     // int kth = kth_track[exam_route.route_len][vl.nodeID];
                     // cout << "in replace operation, kth is: " << kth << endl;
-                    FCNodeID kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
-                    // int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
+                    FCNodeID kthNN = RT.FNN(vl.nodeID, current_cat, kth, vl.nodeID);
+                    //FCNodeID kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
                     int kthNNID = kthNN.first;
                     double kthNNcost = kthNN.second.cost;
+                    //int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
+                    
+
 
                     if (kthNNcost == ArgumentManager::INF)
                     {
@@ -184,7 +193,7 @@ void PruneKOSR::main()
                     }
                     
                     // ** add the replaced route to the route table if a new replaced node is found **
-                    if (kthNNID!=vq.nodeID)
+                    if (kthNNID!=vq.nodeID && kthNNID!=-1)
                     {
                         // cout << "node to be replaced: " << kthNNID<< endl;
                         replaced_route = RT.replace_route(replaced_route, vl.nodeID, kthNNID, kthNNcost);                 
@@ -281,7 +290,8 @@ int RouteTable::table_init(int start_id, int first_cate)
 
     // insert the second route
     Route second_route = init_route;
-    FCNodeID NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
+    FCNodeID NN= FNN(start_id,first_cate,1,start_id);
+    //FCNodeID NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
     // FCNodeID second_id = FNN (start_id, 2, kth);
     int NNID = NN.first;
     double NNcost = NN.second.cost;
@@ -426,7 +436,9 @@ void RouteTable::Lin_Lout_init(){
 //initialization of category vector
 void RouteTable::cateVector_init(){
     cateVector.resize(ArgumentManager::totalCate);
+    //printf("Node number: %d,Cate Number %d\n",DataLoader::numNodes,ArgumentManager::totalCate);
     for (int i=0;i<DataLoader::numNodes;++i){
+        //printf("iteration number: %d, cateID %d\n",i, DataLoader::nodes[i].cateID);
         cateVector[DataLoader::nodes[i].cateID].push_back(DataLoader::nodes[i].nodeID);
     }
 }
@@ -445,7 +457,7 @@ void RouteTable::InvertedLabel_init(){
 }
 
 //return nearest xth neighbor NodeID of source node in next category 
-int RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
+FCNodeID RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
 {
     //return rand()%DataLoader::numNodes;
 
@@ -465,6 +477,15 @@ int RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
     }
     */
 
+    /*
+    //test
+    printf("RelaMForward.size: %d\n",RelaMForward.size());
+    printf("RelaMBackward.first element size: %d\n",RelaMBackward[0].size());
+    printf("RLin size: %d\n",Lin.size());
+    printf("RLout first element size: %d\n",Lout[0].size());
+    printf("Inverted Label size: %d\n",InvertedLabel.size());
+    printf("Inverted Label first element size: %d\n",InvertedLabel[0].size());
+    */
 
     //calculate map<nodeID,distance> for ans;
     map<int,double> ans_map;
@@ -490,11 +511,11 @@ int RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
     for(auto itr=ans_map_sorted.begin();itr!=ans_map_sorted.end();++itr){
         ans_vec.insert(ans_vec.end(),itr->second.begin(),itr->second.end());
         if(ans_vec.size()>=xth){
-            return ans_vec[xth-1];
+            return make_pair(ans_vec[xth-1],FCNode{-1,ans_map[ans_vec[xth-1]]});
         }
     }
     //xth is larger than length of ans_vec, all neighbors in next catrgory have been returned;
-    return -1;
+    return make_pair(-1,FCNode{-1,-1});
 }
 
 Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID, double cost)

@@ -35,15 +35,32 @@ struct Route
 /***************************************
  * Route table class
  **************************************/
+struct FCNode
+{
+    FCNode(): 
+        father(ArgumentManager::INF), cost(ArgumentManager::INF) {};
+    FCNode(int FNode, double cost):
+        father(FNode), cost(cost)
+        {}
+
+    int father;
+    double cost;
+};
+
+typedef pair<int, FCNode> FCNodeID;
 
 class RouteTable
 {
     public:
         RouteTable() {
             //initialization of global private variables for all FNN queries
+            //printf("%s\n","RelaM_init");
             RelaM_init();
+            //printf("%s\n","Lin_Lout_init");
             Lin_Lout_init();
+            //printf("%s\n","cateVector_init");
             cateVector_init();
+            //printf("%s\n","InvertedLabel_init");
             InvertedLabel_init();
         };
         list<vector<Route>> table;
@@ -66,7 +83,7 @@ class RouteTable
         //initialization of Inverted Label
         void InvertedLabel_init();
         //return nearest xth neighbor NodeID of source node in next category 
-        int FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
+        FCNodeID FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
         Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
         Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
 

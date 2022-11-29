@@ -44,7 +44,7 @@ void ArgumentManager::readArguments(int argc, char* argv[])
     if(test)
     {
         k = 2;
-        totalCate = 3;
+        totalCate = 5;
         numQueries = 1;
         numCate = 3;
     }

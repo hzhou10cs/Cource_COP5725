@@ -3,19 +3,6 @@
 
 #include "Prune.h"
 
-struct FCNode
-{
-    FCNode(): 
-        father(ArgumentManager::INF), cost(ArgumentManager::INF) {};
-    FCNode(int FNode, double cost):
-        father(FNode), cost(cost)
-        {}
-
-    int father;
-    double cost;
-};
-
-typedef pair<int, FCNode> FCNodeID;
 
 class DJKSearch
 {
