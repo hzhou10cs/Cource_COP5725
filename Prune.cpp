@@ -26,6 +26,13 @@ void PruneKOSR::main()
         //printf("initialize the route table\n");
         // initialize the route table
         int second_node_ID = RT.table_init(s_node.nodeID, cate_seq.at(0));
+        //case when no nodes in next category from source node
+        if (second_node_ID == -1)
+        {
+            cout << "break here query #: "<< q_order << endl;
+            cout<<"No nodes are avaiable in next cargory from query start node"<<endl;
+            continue;
+        }
         kth_track_map[{s_node.nodeID, 2}] = 1;  
 
         // initialize the category track
@@ -48,6 +55,7 @@ void PruneKOSR::main()
             auto new_table_iter = RT.table.rbegin();
             // delete the original route from the route table
             new_table_iter->pop_back();
+            //cout << "exam size " << exam_route.route_len << endl;
             
 
             // *** examine the route ***
@@ -116,6 +124,7 @@ void PruneKOSR::main()
                 // ** take out the final and last second node **
                 Node vq = DataLoader::nodes.at(exam_route.route.back());
                 Node vl = DataLoader::nodes.at(exam_route.route.rbegin()[1]);
+                //cout << "exam size" << exam_route.route_len << endl;
 
                 // ** update the category track
                 current_cat = vq.cateID;
@@ -149,7 +158,8 @@ void PruneKOSR::main()
                     } 
                     int NNID = NN.first;
                     double NNcost = NN.second.cost;
-                    if (NN.second.cost == ArgumentManager::INF)
+                    printf("NNocst:%f\n",NNcost);
+                    if (NN.second.cost == ArgumentManager::INF || NN.second.cost==-1)
                     {
                         cout << "break here query #: "<< q_order << endl;
                         break;
@@ -186,7 +196,7 @@ void PruneKOSR::main()
                     
 
 
-                    if (kthNNcost == ArgumentManager::INF)
+                    if (kthNNcost == ArgumentManager::INF || kthNNcost == -1)
                     {
                         cout << "break here query #: "<< q_order << endl;
                         break;
@@ -479,13 +489,14 @@ FCNodeID RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNod
 
     /*
     //test
-    printf("RelaMForward.size: %d\n",RelaMForward.size());
-    printf("RelaMBackward.first element size: %d\n",RelaMBackward[0].size());
-    printf("RLin size: %d\n",Lin.size());
-    printf("RLout first element size: %d\n",Lout[0].size());
+    printf("RelaMForward.size: %d; number is %d\n",RelaMForward[15556].size(),RelaMForward[15556][0]);
+    printf("RelaMBackward.first element size: %d; number is %d\n",RelaMBackward[15556].size(),RelaMBackward[15556][0]);
+    printf("RLin size: %d\n",Lin[15556].size());
+    printf("RLout first element size: %d, number is %d\n",Lout[15556].size(),Lout[15556].begin()->first);
     printf("Inverted Label size: %d\n",InvertedLabel.size());
     printf("Inverted Label first element size: %d\n",InvertedLabel[0].size());
     */
+    
 
     //calculate map<nodeID,distance> for ans;
     map<int,double> ans_map;

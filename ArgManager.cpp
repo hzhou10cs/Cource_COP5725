@@ -10,7 +10,7 @@ double ArgumentManager::EPS = 1e-10;
 double ArgumentManager::INF = 1.7e30;
 
 bool ArgumentManager::verbose = 1;
-bool ArgumentManager::test = 1;
+bool ArgumentManager::test = 0;
 
 
 string ArgumentManager::resultDirectory = "result/";
