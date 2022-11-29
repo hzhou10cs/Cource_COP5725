@@ -7,15 +7,18 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <limits>
 
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include <set>
 #include <list>
+#include <queue>
 
 using namespace std;
 typedef unsigned int uint;
+#define doublemax std::numeric_limits<double>::max()
 
 /***************************************
  * Argument manager

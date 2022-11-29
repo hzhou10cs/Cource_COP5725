@@ -297,9 +297,204 @@ int RouteTable::table_init(int start_id, int first_cate)
     return NNID;
 }
 
-int RouteTable::FNN(int source_id, int kth)
+//initilize Forward and Backward Relationship Matrix
+void RouteTable::RelaM_init(){
+    int node_num=DataLoader::numNodes;
+    int edge_num=DataLoader::numEdges;
+    //initialize forward relationship matrix
+    RelaMForward.resize(DataLoader::numNodes);    
+    for (int i=0;i<edge_num;++i){
+        RelaMForward[DataLoader::edges[i].startNodeID].push_back(DataLoader::edges[i].edgeID);
+    }
+    //initialize backward relationship matrix
+    RelaMBackward.resize(DataLoader::numNodes);    
+    for (int i=0;i<edge_num;++i){
+        RelaMBackward[DataLoader::edges[i].endNodeID].push_back(DataLoader::edges[i].edgeID);
+    }
+}
+
+//Return shortest distance between two nodes
+double RouteTable::Query(int startNodeID,int endNodeID){
+    double ans=doublemax;
+    auto Linitr=Lin[endNodeID].end();
+    for (auto itr=Lout[startNodeID].begin();itr!=Lout[startNodeID].end();++itr){
+        Linitr=Lin[endNodeID].find(itr->first);
+        if(Linitr!=Lin[endNodeID].end() && itr->second+Linitr->second<ans){
+            ans=itr->second+Linitr->second;
+        }
+    }
+    return ans;
+}
+
+//comparator for priority queue, smallest value is in top
+class PQComparator{
+    public:
+    bool operator()(const pair<int,double> &a,const pair<int,double> &b){
+    if (a.second>b.second){
+        return true;
+    }
+    return false;
+    }
+};
+
+
+//pruned dijkstra algorithm forward for Lin
+void RouteTable::prunedDijkForward(int start_NodeID){
+    priority_queue<pair<int,double>,vector<pair<int,double>>,PQComparator> PQ;
+    PQ.push(make_pair(start_NodeID,0));
+    vector<double> P(DataLoader::numNodes,doublemax);
+    P[start_NodeID]=0;
+    int cur_NodeID=start_NodeID;
+    int next_NodeID=0;
+    double next_distance=0;
+    while(!PQ.empty()){
+        cur_NodeID=PQ.top().first;
+        PQ.pop();  
+        if (Query(start_NodeID,cur_NodeID)<=P[cur_NodeID]){
+            continue;
+        }
+        //update Lin
+        if(Lin[cur_NodeID].find(start_NodeID)==Lin[cur_NodeID].end()){
+            Lin[cur_NodeID][start_NodeID]=P[cur_NodeID];
+        }
+        else if(Lin[cur_NodeID][start_NodeID]>P[cur_NodeID]){
+            Lin[cur_NodeID][start_NodeID]=P[cur_NodeID];
+        }
+        else{
+            continue;
+        }
+        //find next node
+        for (int i=0;i<RelaMForward[cur_NodeID].size();++i){
+            next_NodeID=DataLoader::edges[RelaMForward[cur_NodeID][i]].endNodeID;
+            next_distance=DataLoader::edges[RelaMForward[cur_NodeID][i]].length;
+            if(P[next_NodeID]>P[cur_NodeID]+next_distance){
+                P[next_NodeID]=P[cur_NodeID]+next_distance;
+                PQ.push(make_pair(next_NodeID,P[next_NodeID]));
+            }
+        }
+    }
+}
+
+//pruned dijkstra algorithm backward for Lout
+void RouteTable::prunedDijkBackward(int start_NodeID){
+    priority_queue<pair<int,double>,vector<pair<int,double>>,PQComparator> PQ;
+    PQ.push(make_pair(start_NodeID,0));
+    vector<double> P(DataLoader::numNodes,doublemax);
+    P[start_NodeID]=0;
+    int cur_NodeID=start_NodeID;
+    int next_NodeID=0;
+    double next_distance=0;
+    while(!PQ.empty()){
+        cur_NodeID=PQ.top().first;
+        PQ.pop();  
+        if (Query(start_NodeID,cur_NodeID)<=P[cur_NodeID]){
+            continue;
+        }
+        //update Lout
+        if(Lout[cur_NodeID].find(start_NodeID)==Lout[cur_NodeID].end()){
+            Lout[cur_NodeID][start_NodeID]=P[cur_NodeID];
+        }
+        else if(Lout[cur_NodeID][start_NodeID]>P[cur_NodeID]){
+            Lout[cur_NodeID][start_NodeID]=P[cur_NodeID];
+        }
+        else{
+            continue;
+        }
+        //find next node
+        for (int i=0;i<RelaMBackward[cur_NodeID].size();++i){
+            next_NodeID=DataLoader::edges[RelaMBackward[cur_NodeID][i]].endNodeID;
+            next_distance=DataLoader::edges[RelaMBackward[cur_NodeID][i]].length;
+            if(P[next_NodeID]>P[cur_NodeID]+next_distance){
+                P[next_NodeID]=P[cur_NodeID]+next_distance;
+                PQ.push(make_pair(next_NodeID,P[next_NodeID]));
+            }
+        }
+    }
+}
+
+//initialization of Lin and Lout in preporcessing
+void RouteTable::Lin_Lout_init(){
+    Lin.resize(DataLoader::numNodes);
+    Lout.resize(DataLoader::numNodes);
+    for(int i=0;i<DataLoader::numNodes;++i){
+        prunedDijkForward(DataLoader::nodes[i].nodeID);
+        prunedDijkBackward(DataLoader::nodes[i].nodeID);
+    }
+}
+
+
+//initialization of category vector
+void RouteTable::cateVector_init(){
+    cateVector.resize(ArgumentManager::totalCate);
+    for (int i=0;i<DataLoader::numNodes;++i){
+        cateVector[DataLoader::nodes[i].cateID].push_back(DataLoader::nodes[i].nodeID);
+    }
+}
+
+
+//initialization of Inverted Label
+void RouteTable::InvertedLabel_init(){
+    InvertedLabel.resize(ArgumentManager::totalCate);
+    for (int i=0;i<ArgumentManager::totalCate;++i){
+        for (int j=0;j<cateVector[i].size();++j){
+            for (auto itr=Lin[cateVector[i][j]].begin();itr!=Lin[cateVector[i][j]].end();++itr){
+                InvertedLabel[i][itr->first][cateVector[i][j]]=itr->second;
+            }
+        }
+    }
+}
+
+//return nearest xth neighbor NodeID of source node in next category 
+int RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
 {
-    return rand()%DataLoader::numNodes;
+    //return rand()%DataLoader::numNodes;
+
+    /*
+    //find current cateID for source_id
+    int cateID=0;
+    for (int i=0;i<ArgumentManager::totalCate;++i){
+        if(std::find(cateVector[i].begin(),cateVector[i].end(),source_id)!=cateVector[i].end()){
+            cateID=i;
+            break;
+        }
+    }
+    //check whether cateID is last one in cate_sequence of Query
+    auto cateID_itr=std::find(Query::cate_sequence.begin(),Query::cate_sequence.end(),cateID);   
+    if(cateID_itr==--Query::cate_sequence.end()){
+        return Query::destinationID;
+    }
+    */
+
+
+    //calculate map<nodeID,distance> for ans;
+    map<int,double> ans_map;
+    for (auto itr=Lout[source_ID].begin();itr!=Lout[source_ID].end();++itr){
+        if(InvertedLabel[next_cate_ID].find(itr->first)!=InvertedLabel[next_cate_ID].end()){
+            for(auto itr1=InvertedLabel[next_cate_ID][itr->first].begin();itr1!=InvertedLabel[next_cate_ID][itr->first].end();++itr1){
+                if(ans_map.find(itr1->first)==ans_map.end()){
+                    ans_map[itr1->first]=itr1->second+itr->second;
+                }
+                else if(ans_map[itr1->first]>itr1->second+itr->second){
+                    ans_map[itr1->first]=itr1->second+itr->second;
+                }
+            }
+        }
+    }
+    //sort ans_map by distance
+    map<double,vector<int>> ans_map_sorted;
+    for (auto itr=ans_map.begin();itr!=ans_map.end();++itr){
+        ans_map_sorted[itr->second].push_back(itr->first);
+    }
+    //stored nodeID by sorted distance
+    vector<int> ans_vec;
+    for(auto itr=ans_map_sorted.begin();itr!=ans_map_sorted.end();++itr){
+        ans_vec.insert(ans_vec.end(),itr->second.begin(),itr->second.end());
+        if(ans_vec.size()>=xth){
+            return ans_vec[xth-1];
+        }
+    }
+    //xth is larger than length of ans_vec, all neighbors in next catrgory have been returned;
+    return -1;
 }
 
 Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID, double cost)
