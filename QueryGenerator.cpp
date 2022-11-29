@@ -23,15 +23,24 @@ void QueryGenerator::generating()
     {
         cout << "Generated " << numQueries << " random queries ... ..." << endl;
         srand(100);
+        vector<int> vali_nodes = DataLoader::good_nodes;
+        vector<int> vali_cates = DataLoader::good_cates;
         for (int i=0; i<numQueries; i++)
         {
-            int source_ID = rand()%numNodes;
+            // int source_ID_index = rand()%(vali_nodes.size());
+            // int source_ID = vali_nodes.at(source_ID_index);
+            // // int destin_ID_index = rand()%(vali_nodes.size());
+            // int destin_ID = vali_nodes.at(source_ID_index+rand()%500);
+
+            int source_ID = rand()%DataLoader::numNodes;
             int destin_ID = source_ID +rand()%1000;
 
             vector<int> category_set;
             for (int i=0; i<numCate; i++)
             { 
-                int cate_index = rand()%totalCate;
+                // int cate_index = rand()%vali_cates.size();
+                // category_set.push_back(vali_cates.at(cate_index));
+                int cate_index = rand()%ArgumentManager::totalCate;
                 category_set.push_back(cate_index);
             }
 
@@ -47,4 +56,9 @@ void QueryGenerator::generating()
             cout << "> ," << topk << "]"<< endl;
         }
     }
+
 }
+
+/***************************************
+ * Dataloader Read Nodes
+ ***************************************/

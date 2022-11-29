@@ -3,6 +3,20 @@
 
 #include "ArgManager.h"
 
+/***************************************
+ * Point Structure
+ **************************************/
+
+struct Point
+{
+    friend std::istream& operator>>(std::istream&, Point&);
+    friend std::ostream& operator<<(std::ostream&, const Point&);
+
+    Point():categoryID(0), dis(0.0) { };
+
+    int categoryID;
+    double dis;
+};
 
 /***************************************
  * Node Structure
@@ -13,7 +27,7 @@ struct Node
     friend std::istream& operator>>(std::istream&, Node&);
     friend std::ostream& operator<<(std::ostream&, const Node&);
 
-    Node(): nodeID(0), cateID (0), longitude(0.0), latitude(0.0) { }
+    Node(): nodeID(0), cateID (ArgumentManager::INF), longitude(0.0), latitude(0.0) { }
 
     int nodeID;
     int cateID;
@@ -22,7 +36,7 @@ struct Node
 };
 
 /***************************************
- * Map Structure
+ * Edge Structure
  **************************************/
 
 struct Edge
@@ -39,6 +53,26 @@ struct Edge
 };
 
 /***************************************
+ * Map Structure
+ **************************************/
+
+struct Map
+{
+    friend std::istream& operator>>(std::istream&, Map&);
+    friend std::ostream& operator<<(std::ostream&, const Map&);
+
+    Map(): edgeID(0), startNodeID(0), endNodeID(0), numPoints(0), length(0.0) { }
+
+    int edgeID;
+    int startNodeID;
+    int endNodeID;
+    int numPoints;
+    double length;
+    vector<Point> points;
+
+};
+
+/***************************************
  * Class: DataLoader
  **************************************/
 
@@ -52,9 +86,16 @@ class DataLoader
 
         static int numNodes;
         static int numEdges;
+        static int numMaps;
+        
         static vector<Node> nodes;
         static vector<Edge> edges;
+        static vector<Map> maps;
+
         static map<int, adj_node> adj_matrix;
+
+        static vector<int> good_nodes;
+        static vector<int> good_cates;
         
         void load();
         void constructing();
@@ -64,6 +105,7 @@ class DataLoader
     private:
         void readNodes();
         void readEdges();
+        void readCates();
 };
 
 

@@ -35,42 +35,19 @@ struct Route
 /***************************************
  * Route table class
  **************************************/
-struct FCNode
-{
-    FCNode(): 
-        father(ArgumentManager::INF), cost(ArgumentManager::INF) {};
-    FCNode(int FNode, double cost):
-        father(FNode), cost(cost)
-        {}
-
-    int father;
-    double cost;
-};
-
-typedef pair<int, FCNode> FCNodeID;
 
 class RouteTable
 {
     public:
-        RouteTable() {
-            //initialization of global private variables for all FNN queries
-            //printf("%s\n","RelaM_init");
-            RelaM_init();
-            //printf("%s\n","Lin_Lout_init");
-            Lin_Lout_init();
-            //printf("%s\n","cateVector_init");
-            cateVector_init();
-            //printf("%s\n","InvertedLabel_init");
-            InvertedLabel_init();
-        };
-        list<vector<Route>> table;
+        RouteTable() {};
+        // list<vector<Route>> table;
         vector<Route> current_step;
         vector<Route> next_step;
         int step_counter;
         vector<Route> result_set; 
 
         int table_init(int start_ID, int first_cate);
-        
+        int FNN(int source_ID, int kth);
         Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
         Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
 
@@ -78,40 +55,10 @@ class RouteTable
         void print_route(Route route_to_print, bool print);
         void print_result_set(bool print);
         void print_hash_table(vector<Route> route_table);
-
-        // ************* FNN
-        //initilize Forward and Backward Relationship Matrix
-        void RelaM_init();
-        //Return shortest distance between two nodes
-        double Query(int startNodeID,int endNodeID);
-        //comparator for priority queue
-        //bool PQComparator(const pair<int,double> &a,const pair<int,double> &b);
-        //pruned dijkstra algorithm forward for Lin and backward for Lout
-        void prunedDijkForward(int start_NodeID);
-        void prunedDijkBackward(int start_NodeID);
-        //initialization of Lin and Lout in preporcessing
-        void Lin_Lout_init();
-        //initialization of category vector
-        void cateVector_init();
-        //initialization of Inverted Label
-        void InvertedLabel_init();
-        //return nearest xth neighbor NodeID of source node in next category 
-        FCNodeID FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
-        
     protected:
 
     private:
-        //forward and backward relationship matrix
-        vector<vector<int>> RelaMForward;
-        vector<vector<int>> RelaMBackward;
-        //vector of hash tables for Lin and Lout
-        vector<map<int,double>> Lin;
-        vector<map<int,double>> Lout;
-        //vector of cateories that group nodes withines each category
-        vector<vector<int>> cateVector;
-        //inverted label
-        vector<map<int,map<int,double>>> InvertedLabel;
-
+        
         
 };
 
@@ -161,9 +108,7 @@ class PruneKOSR
     public:
         PruneKOSR() {};
         void main();
-
-        static int kth_track[0][0];
-    
+        
     protected:
 
     private:

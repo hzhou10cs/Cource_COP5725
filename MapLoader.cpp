@@ -2,9 +2,16 @@
 
 int DataLoader::numNodes = 0;
 int DataLoader::numEdges = 0;
+int DataLoader::numMaps = 0;
+
 vector<Node> DataLoader::nodes;
 vector<Edge> DataLoader::edges;
+vector<Map> DataLoader::maps;
+
 map<int, adj_node> DataLoader::adj_matrix;
+
+vector<int> DataLoader::good_nodes;
+vector<int> DataLoader::good_cates;
 
 /***************************************
  * Reading Node stream
@@ -43,6 +50,30 @@ ostream& operator<<(ostream& out, const Edge& e)
 }
 
 /***************************************
+ * Reading Edge stream
+ ***************************************/
+
+std::istream&
+operator>>(std::istream& in, Map& e)
+{
+    in >> e.startNodeID >> e.endNodeID >> e.length >> e.numPoints;
+    // check that the inputs succeeded
+    if (!in)
+        e = Map();
+    e.points.resize(e.numPoints);
+    for(int i=0; i<e.numPoints; i++)
+    {
+        e.points.push_back(Point());
+        in >> e.points.at(i).categoryID >> e.points.at(i).dis;
+        // check that the inputs succeeded
+        if (!in)
+            e = Map();
+    }
+    return in;
+}
+
+
+/***************************************
  * Dataloader Scheduler
  ***************************************/
 
@@ -55,8 +86,7 @@ void DataLoader::load()
     readNodes();
     readEdges();
 
-    // test only -->
-    if(ArgumentManager::test)
+    if(ArgumentManager::test)// test only -->
     {
         nodes.at(0).cateID = 0;
         nodes.at(1).cateID = 1;
@@ -67,6 +97,9 @@ void DataLoader::load()
         nodes.at(6).cateID = 3;
         nodes.at(7).cateID = 4;
     }
+    else
+        // readCates();
+        {}
 
 }
 
@@ -135,7 +168,80 @@ void DataLoader::readEdges()
 }
 
 /***************************************
- * Dataloader Read Edge
+ * Dataloader Read Map
+ ***************************************/
+
+void DataLoader::readCates()
+{
+    string filename = "data/calmap.txt";
+    ifstream mapfile(filename);
+    if(mapfile.is_open())
+    {
+        while(mapfile.good())
+        {
+            Map map;
+            mapfile >> map;
+            maps.push_back(map);
+            numMaps++;
+            if (map.points.size()!=0)
+            {
+                if (map.points.at(0).categoryID!=ArgumentManager::INF)
+                    nodes.at(map.startNodeID).cateID = map.points.at(0).categoryID;
+            }
+
+        }
+        mapfile.close();
+    }
+    else
+    {
+        cout << "cal.edge is not open" << endl;
+    }
+    numMaps--;
+    cout << numMaps << " Edges has been loaded ... ..." << endl;
+
+
+    vector<int> good_start;
+    vector<int> good_end;
+    vector<int> reachable_node;
+    for (int i=0; i<DataLoader::numEdges; i++)
+    {
+        good_start.push_back(edges.at(i).startNodeID);
+        good_end.push_back(edges.at(i).endNodeID);
+    }
+    sort(good_start.begin(), good_start.end());
+    sort(good_end.begin(), good_end.end());
+    set_intersection(good_start.begin(), good_start.end(),
+                    good_end.begin(), good_end.end(),
+                    back_inserter(reachable_node));
+    
+    int cate_counter[ArgumentManager::totalCate] = {};
+    for (int i=0; i<reachable_node.size(); i++)
+    {   
+        if (nodes.at(reachable_node.at(i)).cateID != ArgumentManager::INF)
+            cate_counter [nodes.at(reachable_node.at(i)).cateID ] += 1;
+        //     cout<<nodes.at(i).cateID << endl;
+    }
+    // filter out the category #>=6 to avoid cycle search
+    for (int i =0; i<ArgumentManager::totalCate; i++)
+    {
+        if (cate_counter[i]>=6)
+            good_cates.push_back(i);       
+    }
+    // select out the nodes with the filtered category to avoid ultimate search
+    for (int i=0; i<reachable_node.size(); i++)
+    {
+        if (count(good_cates.begin(), good_cates.end(),nodes.at(reachable_node.at(i)).cateID))
+            good_nodes.push_back(i);
+    }
+    // for (int i=0; i<good_cates.size(); i++)
+    //     cout << "i: " << i << " -- "<<good_cates.at(i) << endl;
+    cout <<"total good cate: " << good_cates.size() << endl; 
+    cout <<"num of good nodes" << good_nodes.size() << endl;
+        
+}
+
+/***************************************
+ * Dataloader Generating Related matrix
  ***************************************/
 
 void DataLoader::constructing()

@@ -5,6 +5,8 @@ void PruneKOSR::main()
 {
     RouteTable RT;
     HashPool HP;
+    
+    // kth_track[ArgumentManager::numCate][DataLoader::numNodes];
     map<pair<int,int>,int> kth_track_map;
     current_k = 0;
     bool verbose = ArgumentManager::verbose;
@@ -16,40 +18,61 @@ void PruneKOSR::main()
         Node s_node = DataLoader::nodes.at(query.sourceID);
         Node t_node = DataLoader::nodes.at(query.destinationID);
         vector<int> cate_seq = query.cate_sequence;
-        RT.table.clear();
+        // RT.table.clear();
         HP.Hash_list.clear();
         kth_track_map.clear();
+        current_k = 0;
 
-        //printf("initialize the route table\n");
         // initialize the route table
         int second_node_ID = RT.table_init(s_node.nodeID, cate_seq.at(0));
-        //case when no nodes in next category from source node
-        if (second_node_ID == -1)
-        {
-            cout << "break here query #: "<< q_order << endl;
-            cout<<"No nodes are avaiable in next cargory from query start node"<<endl;
-            continue;
-        }
         kth_track_map[{s_node.nodeID, 2}] = 1;  
 
         // initialize the category track
         int current_cat = cate_seq.at(0);
         int next_cat = cate_seq.at(1);
 
-        //printf("In to the main function\n");
         // In to the main function
         while (current_k< ArgumentManager::k)
         {
+            // cout << "current k" << current_k << endl;
             // *** take out the route ***
-            auto table_iter = RT.table.rbegin();
-            Route *exam_route_p = &table_iter->back(); // To directly change the value: iter->front().route_len += 50;
-            Route exam_route(*exam_route_p);
+            // auto table_iter = RT.table.rbegin();
+            // Route *exam_route_p = &table_iter->back(); // To directly change the value: iter->front().route_len += 50;
+            // Route exam_route(*exam_route_p);
+            // cout << "exam size" << exam_route.route_len << endl;
+            Route exam_route = RT.current_step.back();
             
             // *** prepare for the next step -- adding a new step ***
-            RT.table.push_back(RT.table.back());
-            auto new_table_iter = RT.table.rbegin();
+            // RT.table.push_back(RT.table.back());
+            // auto new_table_iter = RT.table.rbegin();
+            RT.next_step = RT.current_step;
+            RT.next_step.pop_back();
+
             // delete the original route from the route table
-            new_table_iter->pop_back();
+            // new_table_iter->pop_back();
+
+            // print out the dominating table for test 
+            // cout << "current step: "<< RT.step_counter;
+            // cout << "----- hashing table for node a -----" << endl;
+            // cout << "dominating table: " ;
+            // RT.print_hash_table(HP.Hash_list[1].dominating_table);
+            // cout << "dominated table: " ;
+            // RT.print_hash_table(HP.Hash_list[1].dominated_table);
+            // cout << endl;
+
+            // cout << "----- hashing table for node b -----" << endl;
+            // cout << "dominating table: " ;
+            // RT.print_hash_table(HP.Hash_list[2].dominating_table);
+            // cout << "dominated table: " ;
+            // RT.print_hash_table(HP.Hash_list[2].dominated_table);
+            // cout << endl;
+
+            // cout << "----- hashing table for node d -----" << endl;
+            // cout << "dominating table: " ;
+            // RT.print_hash_table(HP.Hash_list[4].dominating_table);
+            // cout << "dominated table: " ;
+            // RT.print_hash_table(HP.Hash_list[4].dominated_table);
+            // cout << endl;
             
 
             // *** examine the route ***
@@ -65,6 +88,20 @@ void PruneKOSR::main()
                     int rec_len = lenm1+1;
                     vector<Route> *v_doming = &HP.Hash_list[rec_node_ID].dominating_table;
                     vector<Route> *v_dominated = &HP.Hash_list[rec_node_ID].dominated_table;
+
+                    // show the dominating and dominated table
+                    // if (v_doming->size()!=0)
+                    // {   
+                    //     cout << "dominating table of node: " << rec_node_ID << " -- ";
+                    //     vector<Route> doming_table(*v_doming);
+                    //     RT.print_hash_table(doming_table);
+                    // }
+                    // if (v_dominated->size()!=0)
+                    // {   
+                    //     cout << "dominated table of node: " << rec_node_ID << " -- ";
+                    //     vector<Route> dominated_table(*v_dominated);
+                    //     RT.print_hash_table(dominated_table);
+                    // }
 
                     for (int doming_order = 0; doming_order<v_doming->size(); doming_order++)
                     {   
@@ -85,7 +122,8 @@ void PruneKOSR::main()
                                 if (rec_route.cost != ArgumentManager::INF)
                                 {
                                     rec_route.rec = 1;
-                                    new_table_iter->push_back(rec_route);
+                                    // new_table_iter->push_back(rec_route);
+                                    RT.next_step.push_back(rec_route);
                                     // erase the route in dominating
                                     v_doming->erase(v_doming->begin()+doming_order);
                                 }
@@ -93,18 +131,15 @@ void PruneKOSR::main()
                         }                   
                     }
                 }
-                cout << "Obatain a new result, reconsider the dominated route" << endl;
-                RT.print_result_set(verbose);
+                RT.print_result_set(1);
                 current_k ++;
             }
             // havent visited all category, do extend and replace
             else
             {
-                
                 // ** take out the final and last second node **
                 Node vq = DataLoader::nodes.at(exam_route.route.back());
                 Node vl = DataLoader::nodes.at(exam_route.route.rbegin()[1]);
-                //cout << "exam size" << exam_route.route_len << endl;
 
                 // ** update the category track
                 current_cat = vq.cateID;
@@ -127,32 +162,30 @@ void PruneKOSR::main()
                     // extend the route from the final node
                     Route extended_route = exam_route;
                     // int neighborID = RT.FNN(vq.nodeID, extended_route.knn);
-                    FCNodeID NN;
-                    if (exam_route.route_len == ArgumentManager::numCate+1){
-                        //NN = RT.FNN(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID);
-                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID);
-                    }                      
-                    else{
-                        if (ArgumentManager::algo=="prunedij")
-                            NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
-                        else
-                            NN = RT.FNN(vq.nodeID, next_cat, 1, vq.nodeID);
-                    } 
+                    // FCNodeID NN;
+                    NodeIDC NN;
+                    // if we have visited all categories, search the target node
+                    if (exam_route.route_len == ArgumentManager::numCate+1)
+                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, ArgumentManager::INF, t_node.nodeID); 
+                    // if we haven't finish the category sequence, continue on the kth neighbo searching
+                    else 
+                        NN = DJKSearch::dijkstra(vq.nodeID, next_cat, 1, vq.nodeID);
                     int NNID = NN.first;
-                    double NNcost = NN.second.cost;
-                    // printf("NNocst:%f\n",NNcost);
-                    if (NN.second.cost == ArgumentManager::INF)
+                    // double NNcost = NN.second.cost;
+                    // if (NN.second.cost == ArgumentManager::INF)
+                    float NNcost = NN.second;
+                    if (NN.second == ArgumentManager::INF)
                     {
                         cout << "break here query #: "<< q_order << endl;
                         break;
-                    }
-                    if(NN.second.cost==-1){
-                        continue;
-                    }
+                    } // INF cost means we are facing a dead lock, discard the current query
+
+                    // ** extend with the 1st nearest neighbot for dominating route **
                     extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
 
                     // ** add the extended route to the route table **
-                    new_table_iter->push_back(extended_route);
+                    // new_table_iter->push_back(extended_route);
+                    RT.next_step.push_back(extended_route);
                 }
                 // else if dominated
                 else
@@ -171,54 +204,54 @@ void PruneKOSR::main()
                     kth_track_map[{vl.nodeID, exam_route.route_len}] += 1;
                     int kth = kth_track_map[{vl.nodeID, exam_route.route_len}];
 
-                    FCNodeID kthNN;
-                    if (ArgumentManager::algo=="prunedij")
-                        kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
-                    else
-                        kthNN = RT.FNN(vl.nodeID, current_cat, kth, vl.nodeID);
-
+                    // FCNodeID kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
+                    // // int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
+                    // int kthNNID = kthNN.first;
+                    // double kthNNcost = kthNN.second.cost;
+                    
+                    NodeIDC kthNN = DJKSearch::dijkstra(vl.nodeID, current_cat, kth, vl.nodeID);
+                    // int neighborID = RT.FNN(vl.nodeID, replaced_route.knn);
                     int kthNNID = kthNN.first;
-                    double kthNNcost = kthNN.second.cost;
+                    double kthNNcost = kthNN.second;
 
                     if (kthNNcost == ArgumentManager::INF)
                     {
                         cout << "break here query #: "<< q_order << endl;
                         break;
-                    }
-                    if(kthNNcost==-1){
-                        continue;
-                    }
+                    }// INF cost means we are facing a dead lock, discard the current query
                     
                     // ** add the replaced route to the route table if a new replaced node is found **
-                    if (kthNNID!=vq.nodeID && kthNNID!=-1)
+                    if (kthNNID!=vq.nodeID)
                     {
-                        // cout << "node to be replaced: " << kthNNID<< endl;
                         replaced_route = RT.replace_route(replaced_route, vl.nodeID, kthNNID, kthNNcost);                 
-                        new_table_iter->push_back(replaced_route);
+                        // new_table_iter->push_back(replaced_route);
+                        RT.next_step.push_back(replaced_route);
                     }
                     else
                     {
-                        // cout << "no need to be replace" << endl;
-                    }
-                        
+                        if (verbose==1)
+                            cout << "no need to be replace" << endl;
+                    }     
                 }
-
             }
+        
             // *** sort the route by cost from large to small ***
-            sort( new_table_iter->begin( ), new_table_iter->end( ), [ ]( const Route& lhs, const Route& rhs )
+            // sort( new_table_iter->begin( ), new_table_iter->end( ), [ ]( const Route& lhs, const Route& rhs )
+            // {
+            // return lhs.cost > rhs.cost;
+            // });
+            sort( RT.next_step.begin( ), RT.next_step.end( ), [ ]( const Route& lhs, const Route& rhs )
             {
             return lhs.cost > rhs.cost;
             });
-            cout << "current step: " << RT.table.size() << ", already find: " << current_k << " top routes for query " <<  q_order <<endl; 
-            // (optional) print out 
+            RT.step_counter ++;
+            cout << "current step: " << RT.step_counter << ", already find: " << current_k << "top routes" << endl; 
+            RT.current_step = RT.next_step;
+            // (optional) print out the last step
             RT.print_last_step(verbose);
         }
         if (current_k == ArgumentManager::k)
-        {
-            cout << "finish finding all KOSR for query " <<  q_order <<  endl;
-            RT.print_result_set(1);
-        }
-
+            cout << current_k << " top routes have been found" << endl;
     }
 }
 
@@ -268,8 +301,11 @@ Route HashPool::extract_min(vector<Route> *route_table, int target_len)
         {
             min_route.route = it->route;
             min_route.cost = it->cost;
+            route_table->erase(it);
+            break;
         }
     }
+    
     return min_route;
 }
 
@@ -278,37 +314,44 @@ int RouteTable::table_init(int start_id, int first_cate)
     cout << "start ID is " << start_id << endl;
     cout << "first category is " <<  first_cate << endl;
 
-    table.clear();
+    // table.clear();
     // insert the first route
     Route init_route;
     init_route.route.push_back(start_id);
     vector<Route> init_route_vec;
     init_route_vec.push_back(init_route);
-    table.push_back(init_route_vec);
+    // table.push_back(init_route_vec);
+    current_step = init_route_vec;
 
+    step_counter = 0;
     print_last_step(ArgumentManager::verbose);
 
     // insert the second route
     Route second_route = init_route;
-    
-    FCNodeID NN;
-    if (ArgumentManager::algo=="prunedij")
-        NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
-    else
-        NN= FNN(start_id,first_cate,1,start_id);
-
+    // FCNodeID NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
+    // FCNodeID second_id = FNN (start_id, 2, kth);
+    // int NNID = NN.first;
+    // double NNcost = NN.second.cost;
+    NodeIDC NN= DJKSearch::dijkstra(start_id,first_cate,1,start_id);
     int NNID = NN.first;
-    double NNcost = NN.second.cost;
+    double NNcost = NN.second;
     // cout << "return ID: " <<  NNID <<endl <<"return cost: " << NNcost << endl;
 
     second_route = this->extend_route(second_route, start_id, NNID, NNcost);
     vector<Route> second_route_vec;
     second_route_vec.push_back(second_route);
-    table.push_back(second_route_vec);
+    // table.push_back(second_route_vec);
+    current_step = second_route_vec;
 
+    step_counter ++;
     print_last_step(ArgumentManager::verbose);
 
     return NNID;
+}
+
+int RouteTable::FNN(int source_id, int kth)
+{
+    return rand()%DataLoader::numNodes;
 }
 
 Route RouteTable::extend_route(Route extended_route, int vqID, int neigborID, double cost)
@@ -343,14 +386,25 @@ void RouteTable::print_route(Route route_to_print, bool verbose)
 void RouteTable::print_last_step(bool verbose)
 {
     // print out the current step
+    // if (verbose)
+    // {
+    //     cout << "----------------------------------------" << endl;
+    //     cout << "current step:" << table.size() << endl;
+    //     vector<Route> current_step_v = table.back();
+    //     for (int n_route = 0; n_route<current_step_v.size(); n_route++)
+    //     {
+    //         print_route(current_step_v.at(n_route), 1);
+    //     }
+    //     cout << endl << "*********----------------***************" << endl;
+        
+    // }
     if (verbose)
     {
         cout << "----------------------------------------" << endl;
-        cout << "current step:" << table.size() << endl;
-        vector<Route> current_step_v = table.back();
-        for (int n_route = 0; n_route<current_step_v.size(); n_route++)
+        cout << "current step:" << step_counter <<endl;
+        for (int n_route = 0; n_route<current_step.size(); n_route++)
         {
-            print_route(current_step_v.at(n_route), 1);
+            print_route(current_step.at(n_route), 1);
         }
         cout << endl << "*********----------------***************" << endl;
         
@@ -361,6 +415,7 @@ void RouteTable::print_result_set(bool verbose)
 {
     if (verbose)
     {
+        cout << "Obatain a new result, reconsider the dominated route" << endl;
         cout << "Result set: ";
         for(auto it=result_set.begin(); it!=result_set.end(); it++)
             print_route(*it, 1);
@@ -374,188 +429,4 @@ void RouteTable::print_hash_table(vector<Route> hashing_table)
     for (int m = 0; m < hashing_table.size(); m++)
         this->print_route(hashing_table.at(m), 1);
     cout << endl;
-}
-
-//-------------------------------- FNN part
-//initilize Forward and Backward Relationship Matrix
-void RouteTable::RelaM_init(){
-    int node_num=DataLoader::numNodes;
-    int edge_num=DataLoader::numEdges;
-    //initialize forward relationship matrix
-    RelaMForward.resize(DataLoader::numNodes);    
-    for (int i=0;i<edge_num;++i){
-        RelaMForward[DataLoader::edges[i].startNodeID].push_back(DataLoader::edges[i].edgeID);
-    }
-    //initialize backward relationship matrix
-    RelaMBackward.resize(DataLoader::numNodes);    
-    for (int i=0;i<edge_num;++i){
-        RelaMBackward[DataLoader::edges[i].endNodeID].push_back(DataLoader::edges[i].edgeID);
-    }
-}
-
-//Return shortest distance between two nodes
-double RouteTable::Query(int startNodeID,int endNodeID){
-    double ans=doublemax;
-    auto Linitr=Lin[endNodeID].end();
-    for (auto itr=Lout[startNodeID].begin();itr!=Lout[startNodeID].end();++itr){
-        Linitr=Lin[endNodeID].find(itr->first);
-        if(Linitr!=Lin[endNodeID].end() && itr->second+Linitr->second<ans){
-            ans=itr->second+Linitr->second;
-        }
-    }
-    return ans;
-}
-
-//comparator for priority queue, smallest value is in top
-class PQComparator{
-    public:
-    bool operator()(const pair<int,double> &a,const pair<int,double> &b){
-    if (a.second>b.second){
-        return true;
-    }
-    return false;
-    }
-};
-
-
-//pruned dijkstra algorithm forward for Lin
-void RouteTable::prunedDijkForward(int start_NodeID){
-    priority_queue<pair<int,double>,vector<pair<int,double>>,PQComparator> PQ;
-    PQ.push(make_pair(start_NodeID,0));
-    vector<double> P(DataLoader::numNodes,doublemax);
-    P[start_NodeID]=0;
-    int cur_NodeID=start_NodeID;
-    int next_NodeID=0;
-    double next_distance=0;
-    while(!PQ.empty()){
-        cur_NodeID=PQ.top().first;
-        PQ.pop();  
-        if (Query(start_NodeID,cur_NodeID)<=P[cur_NodeID]){
-            continue;
-        }
-        //update Lin
-        if(Lin[cur_NodeID].find(start_NodeID)==Lin[cur_NodeID].end()){
-            Lin[cur_NodeID][start_NodeID]=P[cur_NodeID];
-        }
-        else if(Lin[cur_NodeID][start_NodeID]>P[cur_NodeID]){
-            Lin[cur_NodeID][start_NodeID]=P[cur_NodeID];
-        }
-        else{
-            continue;
-        }
-        //find next node
-        for (int i=0;i<RelaMForward[cur_NodeID].size();++i){
-            next_NodeID=DataLoader::edges[RelaMForward[cur_NodeID][i]].endNodeID;
-            next_distance=DataLoader::edges[RelaMForward[cur_NodeID][i]].length;
-            if(P[next_NodeID]>P[cur_NodeID]+next_distance){
-                P[next_NodeID]=P[cur_NodeID]+next_distance;
-                PQ.push(make_pair(next_NodeID,P[next_NodeID]));
-            }
-        }
-    }
-}
-
-//pruned dijkstra algorithm backward for Lout
-void RouteTable::prunedDijkBackward(int start_NodeID){
-    priority_queue<pair<int,double>,vector<pair<int,double>>,PQComparator> PQ;
-    PQ.push(make_pair(start_NodeID,0));
-    vector<double> P(DataLoader::numNodes,doublemax);
-    P[start_NodeID]=0;
-    int cur_NodeID=start_NodeID;
-    int next_NodeID=0;
-    double next_distance=0;
-    while(!PQ.empty()){
-        cur_NodeID=PQ.top().first;
-        PQ.pop();  
-        if (Query(start_NodeID,cur_NodeID)<=P[cur_NodeID]){
-            continue;
-        }
-        //update Lout
-        if(Lout[cur_NodeID].find(start_NodeID)==Lout[cur_NodeID].end()){
-            Lout[cur_NodeID][start_NodeID]=P[cur_NodeID];
-        }
-        else if(Lout[cur_NodeID][start_NodeID]>P[cur_NodeID]){
-            Lout[cur_NodeID][start_NodeID]=P[cur_NodeID];
-        }
-        else{
-            continue;
-        }
-        //find next node
-        for (int i=0;i<RelaMBackward[cur_NodeID].size();++i){
-            next_NodeID=DataLoader::edges[RelaMBackward[cur_NodeID][i]].endNodeID;
-            next_distance=DataLoader::edges[RelaMBackward[cur_NodeID][i]].length;
-            if(P[next_NodeID]>P[cur_NodeID]+next_distance){
-                P[next_NodeID]=P[cur_NodeID]+next_distance;
-                PQ.push(make_pair(next_NodeID,P[next_NodeID]));
-            }
-        }
-    }
-}
-
-//initialization of Lin and Lout in preporcessing
-void RouteTable::Lin_Lout_init(){
-    Lin.resize(DataLoader::numNodes);
-    Lout.resize(DataLoader::numNodes);
-    for(int i=0;i<DataLoader::numNodes;++i){
-        prunedDijkForward(DataLoader::nodes[i].nodeID);
-        prunedDijkBackward(DataLoader::nodes[i].nodeID);
-    }
-}
-
-
-//initialization of category vector
-void RouteTable::cateVector_init(){
-    cateVector.resize(ArgumentManager::totalCate);
-    //printf("Node number: %d,Cate Number %d\n",DataLoader::numNodes,ArgumentManager::totalCate);
-    for (int i=0;i<DataLoader::numNodes;++i){
-        //printf("iteration number: %d, cateID %d\n",i, DataLoader::nodes[i].cateID);
-        cateVector[DataLoader::nodes[i].cateID].push_back(DataLoader::nodes[i].nodeID);
-    }
-}
-
-
-//initialization of Inverted Label
-void RouteTable::InvertedLabel_init(){
-    InvertedLabel.resize(ArgumentManager::totalCate);
-    for (int i=0;i<ArgumentManager::totalCate;++i){
-        for (int j=0;j<cateVector[i].size();++j){
-            for (auto itr=Lin[cateVector[i][j]].begin();itr!=Lin[cateVector[i][j]].end();++itr){
-                InvertedLabel[i][itr->first][cateVector[i][j]]=itr->second;
-            }
-        }
-    }
-}
-
-//return nearest xth neighbor NodeID of source node in next category 
-FCNodeID RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
-{
-    //calculate map<nodeID,distance> for ans;
-    map<int,double> ans_map;
-    for (auto itr=Lout[source_ID].begin();itr!=Lout[source_ID].end();++itr){
-        if(InvertedLabel[next_cate_ID].find(itr->first)!=InvertedLabel[next_cate_ID].end()){
-            for(auto itr1=InvertedLabel[next_cate_ID][itr->first].begin();itr1!=InvertedLabel[next_cate_ID][itr->first].end();++itr1){
-                if(ans_map.find(itr1->first)==ans_map.end()){
-                    ans_map[itr1->first]=itr1->second+itr->second;
-                }
-                else if(ans_map[itr1->first]>itr1->second+itr->second){
-                    ans_map[itr1->first]=itr1->second+itr->second;
-                }
-            }
-        }
-    }
-    //sort ans_map by distance
-    map<double,vector<int>> ans_map_sorted;
-    for (auto itr=ans_map.begin();itr!=ans_map.end();++itr){
-        ans_map_sorted[itr->second].push_back(itr->first);
-    }
-    //stored nodeID by sorted distance
-    vector<int> ans_vec;
-    for(auto itr=ans_map_sorted.begin();itr!=ans_map_sorted.end();++itr){
-        ans_vec.insert(ans_vec.end(),itr->second.begin(),itr->second.end());
-        if(ans_vec.size()>=xth){
-            return make_pair(ans_vec[xth-1],FCNode{-1,ans_map[ans_vec[xth-1]]});
-        }
-    }
-    //xth is larger than length of ans_vec, all neighbors in next catrgory have been returned;
-    return make_pair(-1,FCNode{-1,-1});
 }

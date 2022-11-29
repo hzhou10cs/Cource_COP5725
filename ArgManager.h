@@ -6,7 +6,6 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <cstring>
 #include <algorithm>
 #include <limits>
 
@@ -36,7 +35,7 @@ struct ArgumentManager
     static uint numQueries; // ..... number of queries
     static uint numCate; // ........ number of categories each query
     static string algo; // ......... which version of algorithm to be used
-    
+
     static bool test;
     static bool direct;
 
