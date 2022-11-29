@@ -146,7 +146,7 @@ void PruneKOSR::main()
                         cout << "break here query #: "<< q_order << endl;
                         break;
                     }
-                    if(NN.second.cost==-1){
+                    if(NNID==-1){
                         continue;
                     }
                     extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
@@ -185,9 +185,11 @@ void PruneKOSR::main()
                         cout << "break here query #: "<< q_order << endl;
                         break;
                     }
+                    /*
                     if(kthNNcost==-1){
                         continue;
                     }
+                    */
                     
                     // ** add the replaced route to the route table if a new replaced node is found **
                     if (kthNNID!=vq.nodeID && kthNNID!=-1)
