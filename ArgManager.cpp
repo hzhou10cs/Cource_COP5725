@@ -10,7 +10,7 @@ int ArgumentManager::INF = 2147483646;
 
 bool ArgumentManager::verbose = 1;
 bool ArgumentManager::verbose_dijk = 0;
-bool ArgumentManager::test = 1;
+bool ArgumentManager::test = 0;
 bool ArgumentManager::direct = 0;
 
 

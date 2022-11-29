@@ -52,17 +52,7 @@ typedef pair<int, FCNode> FCNodeID;
 class RouteTable
 {
     public:
-        RouteTable() {
-            //initialization of global private variables for all FNN queries
-            //printf("%s\n","RelaM_init");
-            RelaM_init();
-            //printf("%s\n","Lin_Lout_init");
-            Lin_Lout_init();
-            //printf("%s\n","cateVector_init");
-            cateVector_init();
-            //printf("%s\n","InvertedLabel_init");
-            InvertedLabel_init();
-        };
+        RouteTable() {};
         list<vector<Route>> table;
         vector<Route> current_step;
         vector<Route> next_step;
@@ -95,6 +85,8 @@ class RouteTable
         void cateVector_init();
         //initialization of Inverted Label
         void InvertedLabel_init();
+        //Initilialization of data for FNN
+        void FNN_init();
         //return nearest xth neighbor NodeID of source node in next category 
         FCNodeID FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
         

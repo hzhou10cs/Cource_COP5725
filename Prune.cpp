@@ -9,6 +9,9 @@ void PruneKOSR::main()
     current_k = 0;
     bool verbose = ArgumentManager::verbose;
     srand(150);
+    if(ArgumentManager::algo!="prunedij"){
+        RT.FNN_init();
+    }
     for (int q_order = 0; q_order < ArgumentManager::numQueries; q_order ++)
     {
         // resolve the query
@@ -38,7 +41,7 @@ void PruneKOSR::main()
 
         //printf("In to the main function\n");
         // In to the main function
-        while (current_k< ArgumentManager::k)
+        while (!RT.table.empty() && current_k< ArgumentManager::k)
         {
             // *** take out the route ***
             auto table_iter = RT.table.rbegin();
@@ -146,13 +149,12 @@ void PruneKOSR::main()
                         cout << "break here query #: "<< q_order << endl;
                         break;
                     }
-                    if(NNID==-1){
-                        continue;
+                    if(NNID!=-1){
+                        extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
+                        
+                        // ** add the extended route to the route table **
+                        new_table_iter->push_back(extended_route);
                     }
-                    extended_route = RT.extend_route(extended_route, vq.nodeID, NNID, NNcost);
-
-                    // ** add the extended route to the route table **
-                    new_table_iter->push_back(extended_route);
                 }
                 // else if dominated
                 else
@@ -218,6 +220,10 @@ void PruneKOSR::main()
         if (current_k == ArgumentManager::k)
         {
             cout << "finish finding all KOSR for query " <<  q_order <<  endl;
+            RT.print_result_set(1);
+        }
+        else{
+            cout<< "query "<<q_order<< " doesn't have top k results."<<endl;
             RT.print_result_set(1);
         }
 
@@ -527,6 +533,25 @@ void RouteTable::InvertedLabel_init(){
         }
     }
 }
+
+//Initilialization of data for FNN
+void RouteTable::FNN_init(){
+    //initialization of global private variables for all FNN queries
+    //printf("%s\n","RelaM_init");
+    RelaM_init();
+    //printf("%s\n","Lin_Lout_init");
+    Lin_Lout_init();
+    //printf("%s\n","cateVector_init");
+    cateVector_init();
+    //printf("%s\n","InvertedLabel_init");
+    InvertedLabel_init();
+
+    printf("RelaMForward element size: %d\n", RelaMForward[5538].size());
+    printf("RelaMBackward element size: %d\n", RelaMBackward[5538].size());
+    printf("Lin element size: %d\n", Lin[5538].size());
+    printf("Lout element size: %d; first element: %d\n", Lout[5538].size(),Lout[5538].begin()->first);
+}
+
 
 //return nearest xth neighbor NodeID of source node in next category 
 FCNodeID RouteTable::FNN(int source_ID, int next_cate_ID, int xth, int TargetNode)
