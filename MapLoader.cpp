@@ -149,10 +149,14 @@ void DataLoader::constructing()
         nd_pair.second = edges.at(i).length;
         adj_matrix[startID].push_back(nd_pair);
     }
-    // cout << "during constructing the map size is: " << adj_matrix.size();
-    // for (const auto& p : adj_matrix ) {
-    //     if (p.first > 11590 && p.first < 11600)
-    //         cout << p.first << endl; // "Karl", "George"
-    //     // p.second is Employee object.
-    // }
+    if (ArgumentManager::direct==0)
+    {
+        for (int i=0; i<numEdges; i++)
+        {
+            startID = edges.at(i).endNodeID;
+            nd_pair.first = edges.at(i).startNodeID;
+            nd_pair.second = edges.at(i).length;
+            adj_matrix[startID].push_back(nd_pair);
+        }
+    }
 }

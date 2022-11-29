@@ -1,16 +1,17 @@
 #include "ArgManager.h"
 
-uint ArgumentManager::k = 10;
-uint ArgumentManager::totalCate = 10;
-uint ArgumentManager::numQueries = 5;
-uint ArgumentManager::numCate = 3;
-string ArgumentManager::algo = "prune";
+uint ArgumentManager::k = 30;
+uint ArgumentManager::totalCate = 136;
+uint ArgumentManager::numQueries = 1;
+uint ArgumentManager::numCate = 4;
+string ArgumentManager::algo = "prunedij";
 
-double ArgumentManager::EPS = 1e-10;
-double ArgumentManager::INF = 1.7e30;
+int ArgumentManager::INF = 2147483646;
 
 bool ArgumentManager::verbose = 1;
-bool ArgumentManager::test = 0;
+bool ArgumentManager::verbose_dijk = 0;
+bool ArgumentManager::test = 1;
+bool ArgumentManager::direct = 0;
 
 
 string ArgumentManager::resultDirectory = "result/";
@@ -47,6 +48,7 @@ void ArgumentManager::readArguments(int argc, char* argv[])
         totalCate = 5;
         numQueries = 1;
         numCate = 3;
+        direct = 1;
     }
 }
 

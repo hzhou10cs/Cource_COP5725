@@ -22,41 +22,29 @@ void QueryGenerator::generating()
     else
     {
         cout << "Generated " << numQueries << " random queries ... ..." << endl;
-        srand(50);
-        vector<int> goodnodeID;
-        for (int e=0; e<DataLoader::numEdges; e++)
-        {
-            goodnodeID.push_back(DataLoader::edges.at(e).startNodeID);
-
-        }
-        vector<int>::iterator ip;
-        ip = std::unique(goodnodeID.begin(), goodnodeID.end());
-        goodnodeID.resize(distance(goodnodeID.begin(), ip));
-        cout << "good node ID size" << goodnodeID.size() << endl;
+        srand(100);
         for (int i=0; i<numQueries; i++)
         {
-            int source_ID_index = rand()%goodnodeID.size();
-            int source_ID = goodnodeID.at(source_ID_index);
-            int destination_ID = rand()%DataLoader::numNodes;
+            int source_ID = rand()%numNodes;
+            int destin_ID = source_ID +rand()%1000;
 
             vector<int> category_set;
             for (int i=0; i<numCate; i++)
-                { category_set.push_back(rand()%totalCate);}
+            { 
+                int cate_index = rand()%totalCate;
+                category_set.push_back(cate_index);
+            }
 
-            Query query(i, source_ID, destination_ID, topk, category_set);
+            Query query(i, source_ID, destin_ID, topk, category_set);
             query_set.push_back(query);
 
             cout << query_set.at(i).queryID << ": ["  
                 << query_set.at(i).sourceID << ", " 
                 << query_set.at(i).destinationID << ", <" ;
+                // for (int j=0; j<1; j++)
                 for (int j=0; j<numCate; j++)
                     cout << query_set.at(i).cate_sequence.at(j) << ' ';
             cout << "> ," << topk << "]"<< endl;
         }
     }
-
 }
-
-/***************************************
- * Dataloader Read Nodes
- ***************************************/

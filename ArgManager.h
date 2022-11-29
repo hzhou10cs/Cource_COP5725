@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <algorithm>
 #include <limits>
 
@@ -18,6 +19,7 @@
 
 using namespace std;
 typedef unsigned int uint;
+typedef pair<int, float>  NodeIDC;
 #define doublemax std::numeric_limits<double>::max()
 
 /***************************************
@@ -34,12 +36,12 @@ struct ArgumentManager
     static uint numQueries; // ..... number of queries
     static uint numCate; // ........ number of categories each query
     static string algo; // ......... which version of algorithm to be used
-
+    
     static bool test;
+    static bool direct;
 
     /// mathematic parameter
-    static double EPS;
-    static double INF;
+    static int INF;
 
     /// for read arguments
     static void readArguments(int argc, char* argv[]);
@@ -47,6 +49,7 @@ struct ArgumentManager
 
     /// for immediate result print
     static bool verbose;
+    static bool verbose_dijk;
 
     /// for output files
     static string resultDirectory;

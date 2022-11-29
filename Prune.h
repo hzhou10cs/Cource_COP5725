@@ -64,9 +64,22 @@ class RouteTable
             InvertedLabel_init();
         };
         list<vector<Route>> table;
+        vector<Route> current_step;
+        vector<Route> next_step;
+        int step_counter;
         vector<Route> result_set; 
 
         int table_init(int start_ID, int first_cate);
+        
+        Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
+        Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
+
+        void print_last_step(bool print);
+        void print_route(Route route_to_print, bool print);
+        void print_result_set(bool print);
+        void print_hash_table(vector<Route> route_table);
+
+        // ************* FNN
         //initilize Forward and Backward Relationship Matrix
         void RelaM_init();
         //Return shortest distance between two nodes
@@ -84,13 +97,7 @@ class RouteTable
         void InvertedLabel_init();
         //return nearest xth neighbor NodeID of source node in next category 
         FCNodeID FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
-        Route extend_route(Route exam_route, int vq_ID, int neighbor_ID, double cost);
-        Route replace_route(Route exam_route, int vl_ID, int neighbor_ID, double cost);
-
-        void print_last_step(bool print);
-        void print_route(Route route_to_print, bool print);
-        void print_result_set(bool print);
-        void print_hash_table(vector<Route> route_table);
+        
     protected:
 
     private:
