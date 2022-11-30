@@ -79,8 +79,8 @@ void ArgumentManager::printArguments()
 void ArgumentManager::outputExperiment(float time, int nquery, int nneigbor)
 {
     string filename;
-    filename = algo+
-                    "_CAL"+"_k"+to_string(k)+
+    filename = algo+"_"+mapdata+
+                    "_k"+to_string(k)+
                     "_nq"+to_string(numQueries)+
                     "_nc"+to_string(numCate)+
                     "_seed"+to_string(randseed)+".txt";

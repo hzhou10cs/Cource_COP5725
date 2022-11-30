@@ -26,7 +26,7 @@ void QueryGenerator::generating()
         for (int i=0; i<numQueries; i++)
         {
             int source_ID = rand()%numNodes;
-            int destin_ID = source_ID +rand()%1000;
+            int destin_ID = min(source_ID +rand()%1000,numNodes-1);
 
             vector<int> category_set;
             for (int i=0; i<numCate; i++)

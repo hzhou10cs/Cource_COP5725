@@ -63,7 +63,7 @@ void PruneKOSR::main()
 
         //printf("In to the main function\n");
         // In to the main function
-        while (!RT.table.empty() && current_k< ArgumentManager::k)
+        while (!RT.table.back().empty() && current_k< ArgumentManager::k)
         {
             // *** take out the route ***
             auto table_iter = RT.table.rbegin();
@@ -264,7 +264,7 @@ void PruneKOSR::main()
             {
             return lhs.cost > rhs.cost;
             });
-            // cout << "current step: " << RT.table.size() << ", already find: " << current_k << " top routes for query " <<  q_order <<endl; 
+            //cout << "current step: " << RT.table.size() << ", already find: " << current_k << " top routes for query " <<  q_order <<endl; 
             RT.print_last_step(verbose);
         }
         if (current_k == ArgumentManager::k)
