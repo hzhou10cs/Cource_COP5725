@@ -131,6 +131,22 @@ void DataLoader::readEdges()
         cout << "cal.edge is not open" << endl;
     }
     numEdges--;
+    
+    int total_edges = numEdges;
+    if (ArgumentManager::direct==0)
+    {
+        for (int e = 0; e<total_edges; e++)
+        {
+            Edge reversed_edge;
+            reversed_edge.edgeID = edges.at(e).edgeID +total_edges;
+            reversed_edge.startNodeID = edges.at(e).endNodeID;
+            reversed_edge.endNodeID = edges.at(e).startNodeID;
+            reversed_edge.length= edges.at(e).length;
+            edges.push_back(reversed_edge);
+            numEdges++;
+        }
+    }
+    
     cout << numEdges << " Edges has been loaded ... ..." << endl;
 }
 

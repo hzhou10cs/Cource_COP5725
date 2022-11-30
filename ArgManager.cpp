@@ -2,7 +2,7 @@
 
 uint ArgumentManager::k = 30;
 uint ArgumentManager::totalCate = 136;
-uint ArgumentManager::numQueries = 1;
+uint ArgumentManager::numQueries = 5;
 uint ArgumentManager::numCate = 4;
 string ArgumentManager::algo = "prunedij";
 

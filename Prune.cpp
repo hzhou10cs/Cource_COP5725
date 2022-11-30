@@ -41,7 +41,7 @@ void PruneKOSR::main()
 
         //printf("In to the main function\n");
         // In to the main function
-        while (!RT.table.empty() && current_k< ArgumentManager::k)
+        while (!RT.table.back().empty() && current_k< ArgumentManager::k)
         {
             // *** take out the route ***
             auto table_iter = RT.table.rbegin();
@@ -216,6 +216,7 @@ void PruneKOSR::main()
             cout << "current step: " << RT.table.size() << ", already find: " << current_k << " top routes for query " <<  q_order <<endl; 
             // (optional) print out 
             RT.print_last_step(verbose);
+            //printf("Is RT.table empty? %d\n",RT.table.back().empty());
         }
         if (current_k == ArgumentManager::k)
         {
@@ -490,7 +491,7 @@ void RouteTable::prunedDijkBackward(int start_NodeID){
         }
         //find next node
         for (int i=0;i<RelaMBackward[cur_NodeID].size();++i){
-            next_NodeID=DataLoader::edges[RelaMBackward[cur_NodeID][i]].endNodeID;
+            next_NodeID=DataLoader::edges[RelaMBackward[cur_NodeID][i]].startNodeID;
             next_distance=DataLoader::edges[RelaMBackward[cur_NodeID][i]].length;
             if(P[next_NodeID]>P[cur_NodeID]+next_distance){
                 P[next_NodeID]=P[cur_NodeID]+next_distance;
@@ -505,6 +506,7 @@ void RouteTable::Lin_Lout_init(){
     Lin.resize(DataLoader::numNodes);
     Lout.resize(DataLoader::numNodes);
     for(int i=0;i<DataLoader::numNodes;++i){
+        //printf("iteration number %d:\n",i);
         prunedDijkForward(DataLoader::nodes[i].nodeID);
         prunedDijkBackward(DataLoader::nodes[i].nodeID);
     }
@@ -526,6 +528,7 @@ void RouteTable::cateVector_init(){
 void RouteTable::InvertedLabel_init(){
     InvertedLabel.resize(ArgumentManager::totalCate);
     for (int i=0;i<ArgumentManager::totalCate;++i){
+        //printf("iteration number in IL: %d out of %d\n",i+1,ArgumentManager::totalCate);
         for (int j=0;j<cateVector[i].size();++j){
             for (auto itr=Lin[cateVector[i][j]].begin();itr!=Lin[cateVector[i][j]].end();++itr){
                 InvertedLabel[i][itr->first][cateVector[i][j]]=itr->second;
@@ -546,10 +549,22 @@ void RouteTable::FNN_init(){
     //printf("%s\n","InvertedLabel_init");
     InvertedLabel_init();
 
-    printf("RelaMForward element size: %d\n", RelaMForward[5538].size());
-    printf("RelaMBackward element size: %d\n", RelaMBackward[5538].size());
-    printf("Lin element size: %d\n", Lin[5538].size());
-    printf("Lout element size: %d; first element: %d\n", Lout[5538].size(),Lout[5538].begin()->first);
+    // printf("RelaMForward element size: %d\n", RelaMForward[5538].size());
+    // printf("RelaMBackward element size: %d\n", RelaMBackward[5538].size());
+    // printf("Lin element size: %d\n", Lin[5538].size());
+    // printf("Lout element size: %d; first element: %d\n", Lout[5538].size(),Lout[5538].begin()->first);
+    // for (int i=0;i<Lin.size();++i){
+    //     printf("Lin of node %d size %d\n",i,Lin[i].size());
+    //     for (auto itr=Lin[i].begin();itr!=Lin[i].end();++itr){
+    //         cout<<"("<<itr->first<<","<<itr->second<<"),";
+    //     }
+    //     cout<<endl;
+    //     printf("Lout of node %d size %d\n",i,Lout[i].size());
+    //     for (auto itr=Lout[i].begin();itr!=Lout[i].end();++itr){
+    //         cout<<"("<<itr->first<<","<<itr->second<<"),";
+    //     }
+    //     cout<<endl;
+    // }
 }
 
 
