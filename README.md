@@ -30,8 +30,8 @@ There argument are shwon as follow:
     static void printArguments();
 
     /// for immediate result print
-    static bool verbose; // ....... For debug
-    static bool verbose_dijk;
+    static bool verbose; // ....... For debugging
+    static bool verbose_dijk; //... For dubugging dijkstra
     static int randseed; // ....... Control the query generating
 
 You can change the following argument manually:
@@ -47,9 +47,9 @@ Ther are 4 available input of mapdata:
 
 Remember delete all files in the /obj folder the first time you run the program.
 
-The program can be run in the following command:
+The program can be run in the following command (just example):
 
 make
-./DATALOADER -map cal -print 0 -k 30 -nq 50 -nc $c -seed 100 -algo "prunefnn"
+./DATALOADER -map cal -print 0 -k 30 -nq 50 -nc $c -seed 100 -algo "prunedij"
 
 The output file will be saved in the current folder
