@@ -35,28 +35,15 @@ struct Route
 /***************************************
  * Route table class
  **************************************/
-struct FCNode
-{
-    FCNode(): 
-        father(ArgumentManager::INF), cost(ArgumentManager::INF) {};
-    FCNode(int FNode, double cost):
-        father(FNode), cost(cost)
-        {}
-
-    int father;
-    double cost;
-};
-
-typedef pair<int, FCNode> FCNodeID;
 
 class RouteTable
 {
     public:
         RouteTable() {};
         list<vector<Route>> table;
-        vector<Route> current_step;
-        vector<Route> next_step;
-        int step_counter;
+        // vector<Route> current_step;
+        // vector<Route> next_step;
+        // int step_counter;
         vector<Route> result_set; 
 
         int table_init(int start_ID, int first_cate);
@@ -88,7 +75,7 @@ class RouteTable
         //Initilialization of data for FNN
         void FNN_init();
         //return nearest xth neighbor NodeID of source node in next category 
-        FCNodeID FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
+        NodeIDC FNN(int source_ID, int next_cate_ID, int xth, int TargetNode);
         
     protected:
 
@@ -154,7 +141,9 @@ class PruneKOSR
         PruneKOSR() {};
         void main();
 
-        static int kth_track[0][0];
+        static float ave_querytime;
+        static int ave_examinedroute;
+        static int ave_nnqueries;
     
     protected:
 

@@ -6,9 +6,9 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <cstring>
 #include <algorithm>
 #include <limits>
+#include <chrono>
 
 #include <vector>
 #include <map>
@@ -37,7 +37,7 @@ struct ArgumentManager
     static uint numCate; // ........ number of categories each query
     static string algo; // ......... which version of algorithm to be used
     
-    static bool test;
+    static string mapdata;
     static bool direct;
 
     /// mathematic parameter
@@ -50,10 +50,11 @@ struct ArgumentManager
     /// for immediate result print
     static bool verbose;
     static bool verbose_dijk;
+    static int randseed;
 
     /// for output files
     static string resultDirectory;
-    static void outputExperiment();
+    static void outputExperiment(float time, int nquery, int nneigbor);
 };
 
 #endif // ARGMANAGER_H

@@ -9,7 +9,7 @@ class DJKSearch
     public:
         DJKSearch() {};
 
-        static FCNodeID dijkstra(int NodeID, int TargetID, int kth, int TargetNode);
+        static NodeIDC dijkstra(int NodeID, int TargetID, int kth, int TargetNode);
 };
 
 #endif // DJKSearch_H

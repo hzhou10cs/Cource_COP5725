@@ -2,8 +2,10 @@
 
 int DataLoader::numNodes = 0;
 int DataLoader::numEdges = 0;
+
 vector<Node> DataLoader::nodes;
 vector<Edge> DataLoader::edges;
+
 map<int, adj_node> DataLoader::adj_matrix;
 
 /***************************************
@@ -56,7 +58,7 @@ void DataLoader::load()
     readEdges();
 
     // test only -->
-    if(ArgumentManager::test)
+    if(ArgumentManager::mapdata == "test")
     {
         nodes.at(0).cateID = 0;
         nodes.at(1).cateID = 1;
@@ -77,10 +79,7 @@ void DataLoader::load()
 void DataLoader::readNodes()
 {
     string filename;
-    if(ArgumentManager::test)
-        filename = "data/test.cnode";
-    else
-        filename = "data/cal.cnode";
+    filename = "data/"+ArgumentManager::mapdata+".cnode";
     ifstream nodefile(filename);
     if(nodefile.is_open())
     {
@@ -109,10 +108,7 @@ void DataLoader::readNodes()
 void DataLoader::readEdges()
 {
     string filename;
-    if(ArgumentManager::test)
-        filename = "data/test.cedge";
-    else
-        filename = "data/cal.cedge";
+    filename = "data/"+ArgumentManager::mapdata+".cedge";
     ifstream edgefile(filename);
     if(edgefile.is_open())
     {
@@ -130,9 +126,8 @@ void DataLoader::readEdges()
     {
         cout << "cal.edge is not open" << endl;
     }
-    numEdges--;
-    
     int total_edges = numEdges;
+    cout << "numedge is " << endl;
     if (ArgumentManager::direct==0)
     {
         for (int e = 0; e<total_edges; e++)
@@ -146,8 +141,8 @@ void DataLoader::readEdges()
             numEdges++;
         }
     }
-    
     cout << numEdges << " Edges has been loaded ... ..." << endl;
+    
 }
 
 /***************************************
@@ -165,14 +160,14 @@ void DataLoader::constructing()
         nd_pair.second = edges.at(i).length;
         adj_matrix[startID].push_back(nd_pair);
     }
-    if (ArgumentManager::direct==0)
-    {
-        for (int i=0; i<numEdges; i++)
-        {
-            startID = edges.at(i).endNodeID;
-            nd_pair.first = edges.at(i).startNodeID;
-            nd_pair.second = edges.at(i).length;
-            adj_matrix[startID].push_back(nd_pair);
-        }
-    }
+    // if (ArgumentManager::direct==0)
+    // {
+    //     for (int i=0; i<numEdges; i++)
+    //     {
+    //         startID = edges.at(i).endNodeID;
+    //         nd_pair.first = edges.at(i).startNodeID;
+    //         nd_pair.second = edges.at(i).length;
+    //         adj_matrix[startID].push_back(nd_pair);
+    //     }
+    // }
 }

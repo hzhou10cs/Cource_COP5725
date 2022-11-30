@@ -22,6 +22,10 @@ int main(int argc, char* argv[])
     PruneKOSR PK;
     PK.main();
 
+    // output result
+    argmanager.outputExperiment(PK.ave_querytime,
+            PK.ave_examinedroute, PK.ave_nnqueries);
+
     cout << "finish, exit" << endl;
     exit(0);
 }

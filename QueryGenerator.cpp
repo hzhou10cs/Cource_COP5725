@@ -12,7 +12,7 @@ void QueryGenerator::generating()
     cout << "-------------Generating queries------------" << endl;
     
 
-    if(ArgumentManager::test)
+    if(ArgumentManager::mapdata=="test")
     {
         cout << "Testing the query (s, t, <MA, RE, CI>, 2)" << endl;
         query_set.clear();
@@ -22,7 +22,7 @@ void QueryGenerator::generating()
     else
     {
         cout << "Generated " << numQueries << " random queries ... ..." << endl;
-        srand(100);
+        srand(ArgumentManager::randseed);
         for (int i=0; i<numQueries; i++)
         {
             int source_ID = rand()%numNodes;
@@ -41,7 +41,6 @@ void QueryGenerator::generating()
             cout << query_set.at(i).queryID << ": ["  
                 << query_set.at(i).sourceID << ", " 
                 << query_set.at(i).destinationID << ", <" ;
-                // for (int j=0; j<1; j++)
                 for (int j=0; j<numCate; j++)
                     cout << query_set.at(i).cate_sequence.at(j) << ' ';
             cout << "> ," << topk << "]"<< endl;
