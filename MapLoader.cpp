@@ -90,6 +90,9 @@ void DataLoader::readNodes()
             node.cateID = rand()%ArgumentManager::totalCate;
             nodes.push_back(node);
             numNodes++;
+            if(numNodes==8000){
+                break;
+            }
         }
         nodefile.close();
     }
@@ -116,6 +119,9 @@ void DataLoader::readEdges()
         {
             Edge edge;
             edgefile >> edge;
+            if(edge.startNodeID>=8000||edge.endNodeID>=8000){
+                continue;
+            }
             edges.push_back(edge);
             numEdges++;
         }

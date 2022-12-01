@@ -25,6 +25,7 @@ void PruneKOSR::main()
     }
     for (int q_order = 0; q_order < ArgumentManager::numQueries; q_order ++)
     {
+        RT.result_set.clear();
         cout << "******--------Starting query " <<q_order << " --------****" <<endl;
         // initialize output data
         query_time[q_order] = 0;
@@ -152,7 +153,7 @@ void PruneKOSR::main()
                 // ** take out the final and last second node **
                 Node vq = DataLoader::nodes.at(exam_route.route.back());
                 Node vl = DataLoader::nodes.at(exam_route.route.rbegin()[1]);
-                //cout << "exam size" << exam_route.route_len << endl;
+                //cout << "exam size" << exam_route.route_len <<"vq Node ID: "<<vq.nodeID<<" vl NodeID: "<<vl.nodeID<< endl;
 
                 // ** update the category track
                 current_cat = vq.cateID;
@@ -161,7 +162,9 @@ void PruneKOSR::main()
                 else
                     next_cat = cate_seq.at(exam_route.route_len-1);
                 // ** chekc domination **
+                //printf("check dominatuion: \n");
                 bool dominating = HP.check_domination(exam_route, vq.nodeID);
+                //printf("dominating bool is %d: \n",dominating);
                 // if dominating
                 if (dominating)
                 {   
@@ -304,7 +307,7 @@ bool HashPool::check_domination(Route exam_route, int vq_ID)
     
     // Case 2: vertex hash exist and already contain this route_len
     vector<Route> domi_table = Hash_list[vq_ID].dominating_table;
-    for (auto iter = domi_table.rbegin() ; iter != domi_table.rend(); --iter)
+    for (auto iter = domi_table.begin() ; iter != domi_table.end(); ++iter)
     {
         if (iter->route_len == exam_route.route_len)
         {
@@ -454,12 +457,12 @@ void RouteTable::RelaM_init(){
     //initialize forward relationship matrix
     RelaMForward.resize(DataLoader::numNodes);    
     for (int i=0;i<edge_num;++i){
-        RelaMForward[DataLoader::edges[i].startNodeID].push_back(DataLoader::edges[i].edgeID);
+        RelaMForward[DataLoader::edges[i].startNodeID].push_back(i);
     }
     //initialize backward relationship matrix
     RelaMBackward.resize(DataLoader::numNodes);    
     for (int i=0;i<edge_num;++i){
-        RelaMBackward[DataLoader::edges[i].endNodeID].push_back(DataLoader::edges[i].edgeID);
+        RelaMBackward[DataLoader::edges[i].endNodeID].push_back(i);
     }
 }
 
@@ -499,6 +502,7 @@ void RouteTable::prunedDijkForward(int start_NodeID){
     double next_distance=0;
     while(!PQ.empty()){
         cur_NodeID=PQ.top().first;
+        //printf("cur_NodeID\n");
         PQ.pop();  
         if (Query(start_NodeID,cur_NodeID)<=P[cur_NodeID]){
             continue;
@@ -569,6 +573,7 @@ void RouteTable::Lin_Lout_init(){
     for(int i=0;i<DataLoader::numNodes;++i){
         //printf("iteration number %d:\n",i);
         prunedDijkForward(DataLoader::nodes[i].nodeID);
+        //printf("iteration number %d:\n",i);
         prunedDijkBackward(DataLoader::nodes[i].nodeID);
     }
 }
